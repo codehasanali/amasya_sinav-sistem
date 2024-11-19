@@ -1,0 +1,87 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "go run github.com/steebchen/prisma-client-go"
+  output = "../db"
+}
+
+// Bölüm modeli
+model Department {
+  id            Int      @id @default(autoincrement())
+  name          String   
+  adminUsername String   @unique 
+  adminPassword String   
+  examRooms     ExamRoom[]
+  courses       Course[]
+  teachers      Teacher[]
+  exams         Exam[]
+  createdAt     DateTime @default(now())
+}
+
+// Sınav yeri modeli
+model ExamRoom {
+  id           Int      @id @default(autoincrement())
+  roomCode     String   
+  capacity     Int      @default(0)  // Sınıfın kapasitesi
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  exams        Exam[]    @relation("ExamToRoom")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([roomCode, departmentId])
+}
+
+// Ders modeli
+model Course {
+  id           Int      @id @default(autoincrement())
+  name         String   
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  exams        Exam[]
+  createdAt    DateTime  @default(now())
+}
+
+// Öğretmen modeli
+model Teacher {
+  id                Int      @id @default(autoincrement())
+  name              String   
+  title             String   
+  email             String?  
+  phone             String?  
+  departmentId      Int
+  department        Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  examsAsInCharge   Exam[]    @relation("TeacherInCharge")
+  examsAsSupervisor Exam[]    @relation("ExamSupervisors")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Sınav modeli
+model Exam {
+  id                Int       @id @default(autoincrement())
+  name              String    
+  startTime         DateTime  
+  endTime           DateTime  
+  date              DateTime  
+  maxStudentCount   Int       @default(0)    // Maksimum öğrenci sayısı
+  status            String    @default("PENDING") // PENDING, ACTIVE, COMPLETED
+  
+  courseId          Int       
+  course            Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  departmentId      Int       
+  department        Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  
+  teacherInChargeId Int       
+  teacherInCharge   Teacher   @relation("TeacherInCharge", fields: [teacherInChargeId], references: [id], onDelete: Cascade)
+  
+  supervisors       Teacher[] @relation("ExamSupervisors")
+  examRooms         ExamRoom[] @relation("ExamToRoom")
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bölüm Admin Girişi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Bölüm Admin Girişi</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Kullanıcı Adı:</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre:</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit">
+                <span class="button-content">
+                    <span class="button-text">Giriş Yap</span>
+                    <span class="spinner"></span>
+                </span>
+            </button>
+        </form>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        // Clear any existing session data
+        localStorage.removeItem('departmentData');
+
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        const buttonText = submitButton.querySelector('.button-text');
+        const spinner = submitButton.querySelector('.spinner');
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function setLoading(loading) {
+            submitButton.disabled = loading;
+            spinner.style.display = loading ? 'block' : 'none';
+            buttonText.textContent = loading ? 'Giriş Yapılıyor...' : 'Giriş Yap';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            setLoading(true);
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showError('Kullanıcı adı ve şifre gereklidir.');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/department/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success && data.token && data.department) {
+                    // Store token and department info
+                    localStorage.setItem('departmentData', JSON.stringify({
+                        id: data.department.id,
+                        name: data.department.name,
+                        token: data.token
+                    }));
+                    
+                    // Redirect to admin dashboard
+                    window.location.href = 'department_admin.html';
+                } else {
+                    const errorMsg = data.message || 'Hatalı kullanıcı adı veya şifre!';
+                    showError(errorMsg);
+                }
+            } catch (error) {
+                console.error('Giriş hatası:', error);
+                showError('Bağlantı hatası oluştu. Lütfen tekrar deneyin.');
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

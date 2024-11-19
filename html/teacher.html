@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğretmen Yönetimi</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            padding-top: 100px;
+            z-index: 998;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin: 5px 15px;
+            border-radius: 10px;
+        }
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar-link i {
+            margin-right: 15px;
+            font-size: 1.3rem;
+        }
+        .sidebar-link.active {
+            background-color: white;
+            color: #1e3c72;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 100px 30px 30px;
+            max-width: 100%;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        }
+        .teacher-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #1e3c72;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h4 mb-0">Öğretmen Yönetimi</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="/html/department_admin.html" class="sidebar-link">
+            <i class="bi bi-calendar-week"></i>
+            <span>Takvim</span>
+        </a>
+        <a href="/html/teacher.html" class="sidebar-link active">
+            <i class="bi bi-person-workspace"></i>
+            <span>Öğretmenler</span>
+        </a>
+        <a href="#" class="sidebar-link">
+            <i class="bi bi-book"></i>
+            <span>Dersler</span>
+        </a>
+        <a href="#" class="sidebar-link" onclick="logout()">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Çıkış Yap</span>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                        <i class="bi bi-plus-lg me-2"></i>Yeni Öğretmen Ekle
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px"></th>
+                                    <th>Ad Soyad</th>
+                                    <th>Branş</th>
+                                    <th>E-posta</th>
+                                    <th>Telefon</th>
+                                    <th style="width: 100px">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachersList">
+                                <!-- Teachers will be loaded here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Teacher Modal -->
+    <div class="modal fade" id="addTeacherModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Öğretmen Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTeacherForm">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" id="teacherName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Branş</label>
+                            <input type="text" class="form-control" id="teacherBranch" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-posta</label>
+                            <input type="email" class="form-control" id="teacherEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" class="form-control" id="teacherPhone" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="addTeacher()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Öğretmen Sil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bu öğretmeni silmek istediğinizden emin misiniz?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Sil</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedTeacherId = null;
+        
+        // Authentication check
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('departmentToken');
+            const departmentId = localStorage.getItem('departmentId');
+            
+            if (!token || !departmentId) {
+                window.location.href = '/html/login.html';
+                return;
+            }
+            
+            loadTeachers();
+        });
+
+        function loadTeachers() {
+            const token = localStorage.getItem('departmentToken');
+            const departmentId = localStorage.getItem('departmentId');
+
+            fetch('/api/teachers', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Department-ID': departmentId
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Token expired or invalid
+                        localStorage.removeItem('departmentToken');
+                        localStorage.removeItem('departmentId');
+                        localStorage.removeItem('departmentName');
+                        window.location.href = '/html/login.html';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(teachers => {
+                const tbody = document.getElementById('teachersList');
+                tbody.innerHTML = '';
+                
+                teachers.forEach(teacher => {
+                    const initials = teacher.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase();
+                        
+                    const row = `
+                        <tr>
+                            <td>
+                                <div class="teacher-avatar">${initials}</div>
+                            </td>
+                            <td>${teacher.name}</td>
+                            <td>${teacher.branch}</td>
+                            <td>${teacher.email}</td>
+                            <td>${teacher.phone}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${teacher.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error('Error loading teachers:', error);
+                alert('Öğretmenler yüklenirken bir hata oluştu.');
+            });
+        }
+
+        function addTeacher() {
+            const token = localStorage.getItem('departmentToken');
+            const departmentId = localStorage.getItem('departmentId');
+
+            const teacherData = {
+                name: document.getElementById('teacherName').value,
+                branch: document.getElementById('teacherBranch').value,
+                email: document.getElementById('teacherEmail').value,
+                phone: document.getElementById('teacherPhone').value,
+                departmentId: parseInt(departmentId)
+            };
+
+            fetch('/api/teachers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'Department-ID': departmentId
+                },
+                body: JSON.stringify(teacherData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentToken');
+                        localStorage.removeItem('departmentId');
+                        localStorage.removeItem('departmentName');
+                        window.location.href = '/html/login.html';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(() => {
+                loadTeachers();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addTeacherModal'));
+                modal.hide();
+                document.getElementById('addTeacherForm').reset();
+            })
+            .catch(error => {
+                console.error('Error adding teacher:', error);
+                alert('Öğretmen eklenirken bir hata oluştu.');
+            });
+        }
+
+        function deleteTeacher(teacherId) {
+            selectedTeacherId = teacherId;
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            modal.show();
+        }
+
+        function confirmDelete() {
+            if (!selectedTeacherId) return;
+
+            const token = localStorage.getItem('departmentToken');
+            const departmentId = localStorage.getItem('departmentId');
+
+            fetch(`/api/teachers/${selectedTeacherId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Department-ID': departmentId
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentToken');
+                        localStorage.removeItem('departmentId');
+                        localStorage.removeItem('departmentName');
+                        window.location.href = '/html/login.html';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                loadTeachers();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                modal.hide();
+            })
+            .catch(error => {
+                console.error('Error deleting teacher:', error);
+                alert('Öğretmen silinirken bir hata oluştu.');
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('departmentToken');
+            localStorage.removeItem('departmentId');
+            localStorage.removeItem('departmentName');
+            window.location.href = '/html/login.html';
+        }
+    </script>
+</body>
+</html>
