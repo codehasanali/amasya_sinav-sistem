@@ -7,133 +7,185 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1d4ed8;
+            --background-color: #f8fafc;
+            --text-color: #000000;
+            --text-muted: #333333;
+            --text-light: #f8fafc;
+            --link-color: #000000;
+            --link-hover-color: #2563eb;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin-top: 60px; /* Added margin to push content down */
+        }
+
         .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-light);
+            padding: 1rem 0;
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 280px;
-            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-            padding-top: 100px;
-            z-index: 998;
-        }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 25px;
-            color: rgba(255, 255, 255, 0.8);
+
+        .nav-link {
+            color: var(--text-light);
             text-decoration: none;
-            transition: all 0.3s ease;
-            margin: 5px 15px;
-            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
         }
-        .sidebar-link:hover {
+
+        .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            transform: translateX(5px);
+            color: var(--text-light);
         }
-        .sidebar-link i {
-            margin-right: 15px;
-            font-size: 1.3rem;
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 500;
         }
-        .sidebar-link.active {
-            background-color: white;
-            color: #1e3c72;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+        .nav-link i {
+            margin-right: 0.5rem;
         }
+
         .main-content {
-            margin-left: 280px;
-            padding: 100px 30px 30px;
-            max-width: 100%;
+            padding: 5rem 2rem 2rem;
+            min-height: 100vh;
+            margin-top: 20px; /* Added margin to main content */
         }
+
         .card {
             border: none;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
+
         .table {
             margin-bottom: 0;
         }
+
         .table th {
             border-top: none;
             font-weight: 600;
-            color: #1e3c72;
+            color: var(--primary-color);
         }
+
         .btn-primary {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            border: none;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
         }
+
         .btn-primary:hover {
-            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
         }
+
         .teacher-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background-color: #1e3c72;
+            background-color: var(--primary-color);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
         }
+
+        .modal-content {
+            border-radius: 1rem;
+            border: none;
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            padding: 1rem 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-control {
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            border-color: #e2e8f0;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding-top: 6rem;
+                margin-top: 30px; /* Increased margin for mobile */
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row align-items-center">
-                <div class="col">
+                <div class="col-md-4">
                     <h1 class="h4 mb-0">Öğretmen Yönetimi</h1>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex gap-3">
+                        <a href="department_admin.html" class="nav-link">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Takvim</span>
+                        </a>
+                        <a href="teacher.html" class="nav-link active">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>Öğretmenler</span>
+                        </a>
+                        <a href="courses.html" class="nav-link">
+                            <i class="bi bi-book"></i>
+                            <span>Dersler</span>
+                        </a>
+                        <a href="rooms.html" class="nav-link">
+                            <i class="bi bi-building"></i>
+                            <span>Sınav Yerleri</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="#" class="nav-link" onclick="logout()">
+                        <i class="bi bi-box-arrow-left"></i>
+                        <span>Çıkış Yap</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <a href="/html/department_admin.html" class="sidebar-link">
-            <i class="bi bi-calendar-week"></i>
-            <span>Takvim</span>
-        </a>
-        <a href="/html/teacher.html" class="sidebar-link active">
-            <i class="bi bi-person-workspace"></i>
-            <span>Öğretmenler</span>
-        </a>
-        <a href="#" class="sidebar-link">
-            <i class="bi bi-book"></i>
-            <span>Dersler</span>
-        </a>
-        <a href="#" class="sidebar-link" onclick="logout()">
-            <i class="bi bi-box-arrow-left"></i>
-            <span>Çıkış Yap</span>
-        </a>
-    </div>
-
     <!-- Main Content -->
     <div class="main-content">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row mb-4">
                 <div class="col">
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
@@ -150,14 +202,14 @@
                                 <tr>
                                     <th style="width: 50px"></th>
                                     <th>Ad Soyad</th>
-                                    <th>Branş</th>
+                                    <th>Unvan</th>
                                     <th>E-posta</th>
                                     <th>Telefon</th>
                                     <th style="width: 100px">İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody id="teachersList">
-                                <!-- Teachers will be loaded here dynamically -->
+                        
                             </tbody>
                         </table>
                     </div>
@@ -166,23 +218,29 @@
         </div>
     </div>
 
-    <!-- Add Teacher Modal -->
     <div class="modal fade" id="addTeacherModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Yeni Öğretmen Ekle</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addTeacherForm">
+                    <form id="teacherForm" onsubmit="event.preventDefault(); addTeacher();">
                         <div class="mb-3">
                             <label class="form-label">Ad Soyad</label>
                             <input type="text" class="form-control" id="teacherName" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Branş</label>
-                            <input type="text" class="form-control" id="teacherBranch" required>
+                            <label class="form-label">Unvan</label>
+                            <select class="form-select" id="teacherTitle" required>
+                                <option value="">Unvan seçiniz</option>
+                                <option value="Prof. Dr.">Prof. Dr.</option>
+                                <option value="Doç. Dr.">Doç. Dr.</option>
+                                <option value="Dr. Öğr. Üyesi">Dr. Öğr. Üyesi</option>
+                                <option value="Öğr. Gör.">Öğr. Gör.</option>
+                                <option value="Arş. Gör.">Arş. Gör.</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">E-posta</label>
@@ -192,204 +250,330 @@
                             <label class="form-label">Telefon</label>
                             <input type="tel" class="form-control" id="teacherPhone" required>
                         </div>
+                        <button type="submit" class="btn btn-primary w-100">Ekle</button>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-primary" onclick="addTeacher()">Kaydet</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Öğretmen Sil</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Bu öğretmeni silmek istediğinizden emin misiniz?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Sil</button>
-                </div>
+
+
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let selectedTeacherId = null;
-        
-        // Authentication check
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('departmentToken');
-            const departmentId = localStorage.getItem('departmentId');
-            
-            if (!token || !departmentId) {
-                window.location.href = '/html/login.html';
-                return;
-            }
-            
+        // Load teachers when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
             loadTeachers();
+            
+            // Add event listener for edit form submission
+            const editTeacherForm = document.getElementById('editTeacherForm');
+            if (editTeacherForm) {
+                editTeacherForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const teacherId = document.getElementById('editTeacherId').value;
+                    const name = document.getElementById('editTeacherName').value;
+                    const title = document.getElementById('editTeacherTitle').value;
+                    
+                    if (!name || !title) {
+                        showToast('error', 'Ad ve unvan alanları zorunludur');
+                        return;
+                    }
+                    
+                    try {
+                        const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                        const formData = {
+                            id: parseInt(teacherId),
+                            name: name,
+                            title: title,
+                            email: document.getElementById('editTeacherEmail').value,
+                            phone: document.getElementById('editTeacherPhone').value,
+                            departmentId: departmentData.id
+                        };
+
+                        const response = await fetch(`http://localhost:8080/api/teachers/update/${teacherId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${departmentData.token}`
+                            },
+                            body: JSON.stringify(formData)
+                        });
+
+                        if (!response.ok) {
+                            if (response.status === 401) {
+                                localStorage.removeItem('departmentData');
+                                window.location.href = 'login.html';
+                                return;
+                            }
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Öğretmen güncellenirken hata oluştu');
+                        }
+
+                        const result = await response.json();
+                        if (!result.success) {
+                            throw new Error(result.error || 'Öğretmen güncellenemedi');
+                        }
+
+                        showToast('success', 'Öğretmen başarıyla güncellendi');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editTeacherModal'));
+                        modal.hide();
+                        await loadTeachers();
+                    } catch (error) {
+                        console.error('Error updating teacher:', error);
+                        showToast('error', 'Öğretmen güncellenirken bir hata oluştu: ' + error.message);
+                    }
+                });
+            }
         });
 
-        function loadTeachers() {
-            const token = localStorage.getItem('departmentToken');
-            const departmentId = localStorage.getItem('departmentId');
-
-            fetch('/api/teachers', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Department-ID': departmentId
+        async function loadTeachers() {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                if (!departmentData) {
+                    window.location.href = 'login.html';
+                    return;
                 }
-            })
-            .then(response => {
+
+                const response = await fetch(`/api/teachers/department?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
                 if (!response.ok) {
                     if (response.status === 401) {
-                        // Token expired or invalid
-                        localStorage.removeItem('departmentToken');
-                        localStorage.removeItem('departmentId');
-                        localStorage.removeItem('departmentName');
-                        window.location.href = '/html/login.html';
+                        window.location.href = 'login.html';
                         return;
                     }
-                    throw new Error('Network response was not ok');
+                    throw new Error('Öğretmenler yüklenirken hata oluştu');
                 }
-                return response.json();
-            })
-            .then(teachers => {
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Öğretmenler yüklenemedi');
+                }
+
+                const teachers = result.data;
                 const tbody = document.getElementById('teachersList');
                 tbody.innerHTML = '';
-                
+
                 teachers.forEach(teacher => {
-                    const initials = teacher.name
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase();
-                        
-                    const row = `
-                        <tr>
-                            <td>
-                                <div class="teacher-avatar">${initials}</div>
-                            </td>
-                            <td>${teacher.name}</td>
-                            <td>${teacher.branch}</td>
-                            <td>${teacher.email}</td>
-                            <td>${teacher.phone}</td>
-                            <td>
-                                <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${teacher.id})">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
+                    const row = document.createElement('tr');
+                    const initials = getInitials(teacher.name);
+                    
+                    row.innerHTML = `
+                        <td>
+                            <div class="teacher-avatar">${initials}</div>
+                        </td>
+                        <td>${teacher.name}</td>
+                        <td>${teacher.title || '-'}</td>
+                        <td>${teacher.email || '-'}</td>
+                        <td>${teacher.phone || '-'}</td>
+                        <td>
+                         
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(${teacher.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     `;
-                    tbody.innerHTML += row;
+                    tbody.appendChild(row);
                 });
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error loading teachers:', error);
-                alert('Öğretmenler yüklenirken bir hata oluştu.');
-            });
+                showToast('error', 'Öğretmenler yüklenirken bir hata oluştu: ' + error.message);
+            }
         }
 
-        function addTeacher() {
-            const token = localStorage.getItem('departmentToken');
-            const departmentId = localStorage.getItem('departmentId');
+        async function editTeacher(teacherId) {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                if (!departmentData || !departmentData.token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-            const teacherData = {
-                name: document.getElementById('teacherName').value,
-                branch: document.getElementById('teacherBranch').value,
-                email: document.getElementById('teacherEmail').value,
-                phone: document.getElementById('teacherPhone').value,
-                departmentId: parseInt(departmentId)
-            };
+                // Get teacher details from the department teachers list
+                const response = await fetch(`/api/teachers/department?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
 
-            fetch('/api/teachers', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                    'Department-ID': departmentId
-                },
-                body: JSON.stringify(teacherData)
-            })
-            .then(response => {
                 if (!response.ok) {
                     if (response.status === 401) {
-                        localStorage.removeItem('departmentToken');
-                        localStorage.removeItem('departmentId');
-                        localStorage.removeItem('departmentName');
-                        window.location.href = '/html/login.html';
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
                         return;
                     }
-                    throw new Error('Network response was not ok');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Öğretmen bilgileri alınamadı');
                 }
-                return response.json();
-            })
-            .then(() => {
-                loadTeachers();
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Öğretmen bilgileri alınamadı');
+                }
+
+                // Find the specific teacher from the list
+                const teacher = result.data.find(t => t.id === teacherId);
+                if (!teacher) {
+                    throw new Error('Öğretmen bulunamadı');
+                }
+
+                // Fill the edit form with teacher details
+                document.getElementById('editTeacherId').value = teacher.id;
+                document.getElementById('editTeacherName').value = teacher.name;
+                document.getElementById('editTeacherTitle').value = teacher.title;
+                document.getElementById('editTeacherEmail').value = teacher.email || '';
+                document.getElementById('editTeacherPhone').value = teacher.phone || '';
+
+                // Open the edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editTeacherModal'));
+                editModal.show();
+            } catch (error) {
+                console.error('Error fetching teacher details:', error);
+                showToast('error', 'Öğretmen bilgileri alınamadı: ' + error.message);
+            }
+        }
+
+        async function addTeacher() {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                if (!departmentData) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const formData = {
+                    name: document.getElementById('teacherName').value,
+                    title: document.getElementById('teacherTitle').value,
+                    email: document.getElementById('teacherEmail').value,
+                    phone: document.getElementById('teacherPhone').value,
+                    departmentId: departmentData.id
+                };
+
+                const response = await fetch('/api/teachers/create', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Öğretmen eklenirken hata oluştu');
+                }
+
+                showToast('success', 'Öğretmen başarıyla eklendi');
+                
+                // Close modal and reset form
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addTeacherModal'));
                 modal.hide();
-                document.getElementById('addTeacherForm').reset();
-            })
-            .catch(error => {
+                document.getElementById('teacherForm').reset();
+                
+                // Refresh teachers list
+                await loadTeachers();
+                
+            } catch (error) {
                 console.error('Error adding teacher:', error);
-                alert('Öğretmen eklenirken bir hata oluştu.');
-            });
+                showToast('error', 'Öğretmen eklenirken bir hata oluştu: ' + error.message);
+            }
         }
 
-        function deleteTeacher(teacherId) {
-            selectedTeacherId = teacherId;
-            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-            modal.show();
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .map(word => word[0])
+                .join('')
+                .toUpperCase();
         }
 
-        function confirmDelete() {
-            if (!selectedTeacherId) return;
-
-            const token = localStorage.getItem('departmentToken');
-            const departmentId = localStorage.getItem('departmentId');
-
-            fetch(`/api/teachers/${selectedTeacherId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Department-ID': departmentId
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        localStorage.removeItem('departmentToken');
-                        localStorage.removeItem('departmentId');
-                        localStorage.removeItem('departmentName');
-                        window.location.href = '/html/login.html';
-                        return;
-                    }
-                    throw new Error('Network response was not ok');
-                }
-                loadTeachers();
-                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
-                modal.hide();
-            })
-            .catch(error => {
-                console.error('Error deleting teacher:', error);
-                alert('Öğretmen silinirken bir hata oluştu.');
-            });
+        function showToast(type, message) {
+            const toast = document.getElementById('notificationToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.classList.remove('bg-success', 'bg-danger');
+            toast.classList.add(type === 'success' ? 'bg-success' : 'bg-danger');
+            toastMessage.textContent = message;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
         }
 
         function logout() {
-            localStorage.removeItem('departmentToken');
-            localStorage.removeItem('departmentId');
-            localStorage.removeItem('departmentName');
-            window.location.href = '/html/login.html';
+            localStorage.removeItem('departmentData');
+            window.location.href = 'login.html';
+        }
+
+        async function deleteTeacher(id) {
+            if (confirm('Bu öğretmeni silmek istediğinizden emin misiniz?')) {
+                try {
+                    const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                    if (!departmentData || !departmentData.token) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    const response = await fetch(`/api/teachers/delete?id=${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${departmentData.token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            localStorage.removeItem('departmentData');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                        const errorData = await response.json().catch(() => ({ error: 'Sunucu yanıtı alınamadı' }));
+                        throw new Error(errorData.error || 'Öğretmen silinirken hata oluştu');
+                    }
+
+                    const result = await response.json().catch(() => ({ success: false, error: 'Sunucu yanıtı alınamadı' }));
+                    if (!result.success) {
+                        throw new Error(result.error || 'Öğretmen silinemedi');
+                    }
+
+                    showToast('success', 'Öğretmen başarıyla silindi');
+                    await loadTeachers();
+                    
+                } catch (error) {
+                    console.error('Error deleting teacher:', error);
+                    showToast('error', 'Öğretmen silinirken bir hata oluştu: ' + error.message);
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('departmentData');
+            window.location.href = 'login.html';
         }
     </script>
 </body>

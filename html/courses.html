@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ders Yönetimi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+            --background-color: #f9fafb;
+            --text-color: #111827;
+            --text-muted: #6b7280;
+            --text-light: #ffffff;
+            --border-color: #e5e7eb;
+            --success-color: #059669;
+            --danger-color: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-light);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .main-content {
+            padding: 6rem 2rem 2rem;
+            min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .table td {
+            vertical-align: middle;
+            padding: 1rem 0.75rem;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            border: none;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-light);
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 2rem 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+            min-width: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .toast-header {
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .toast-body {
+            padding: 1rem;
+            font-weight: 500;
+        }
+
+        .success-toast .toast-header {
+            background-color: var(--success-color);
+            color: var(--text-light);
+        }
+
+        .error-toast .toast-header {
+            background-color: var(--danger-color);
+            color: var(--text-light);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 5rem 1rem 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .table-responsive {
+                margin: 0 -1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h1>Bölüm Yönetim Paneli</h1>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex gap-3">
+                        <a href="department_admin.html" class="nav-link">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Takvim</span>
+                        </a>
+                        <a href="teacher.html" class="nav-link">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>Öğretmenler</span>
+                        </a>
+                        <a href="course.html" class="nav-link active">
+                            <i class="bi bi-book"></i>
+                            <span>Dersler</span>
+                        </a>
+                        <a href="rooms.html" class="nav-link">
+                            <i class="bi bi-building"></i>
+                            <span>Sınav Yerleri</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="#" class="nav-link" onclick="logout()">
+                        <i class="bi bi-box-arrow-left"></i>
+                        <span>Çıkış Yap</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-book me-2"></i>Dersler</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+                    <i class="bi bi-plus-lg me-2"></i>Yeni Ders Ekle
+                </button>
+            </div>
+
+            <!-- Courses Table -->
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ders Adı</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coursesList">
+                        
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div class="modal fade" id="addCourseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Ders Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="addCourseForm" onsubmit="addCourse(event)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Ders Adı</label>
+                            <input type="text" class="form-control" id="courseName" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">Ekle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Course Modal -->
+    <div class="modal fade" id="editCourseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dersi Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editCourseForm" onsubmit="updateCourse(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="editCourseId">
+                        <div class="mb-3">
+                            <label class="form-label">Ders Adı</label>
+                            <input type="text" class="form-control" id="editCourseName" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+            if (!departmentData) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadCourses();
+        });
+
+        async function loadCourses() {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                if (!departmentData) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`/api/courses?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    throw new Error('Dersler yüklenirken hata oluştu');
+                }
+
+                const courses = await response.json();
+                const tbody = document.getElementById('coursesList');
+                tbody.innerHTML = '';
+
+                courses.forEach(course => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${course.name}</td>
+                      
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(${course.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                showToast('error', 'Dersler yüklenirken bir hata oluştu: ' + error.message);
+            }
+        }
+
+        async function addCourse(event) {
+            event.preventDefault();
+            const courseName = document.getElementById('courseName').value;
+
+            if (!courseName) {
+                showToast('error', 'Ders adı zorunludur');
+                return;
+            }
+
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                const formData = {
+                    name: courseName,
+                    departmentId: departmentData.id
+                };
+
+                const response = await fetch('/api/courses/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ders eklenirken hata oluştu');
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Ders eklenemedi');
+                }
+
+                showToast('success', 'Ders başarıyla eklendi');
+                await loadCourses();
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCourseModal'));
+                modal.hide();
+                document.getElementById('addCourseForm').reset();
+            } catch (error) {
+                showToast('error', 'Ders eklenirken bir hata oluştu: ' + error.message);
+            }
+        }
+
+        async function deleteCourse(id) {
+            if (!confirm('Bu dersi silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                const response = await fetch(`/api/courses/delete?id=${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ders silinirken hata oluştu');
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Ders silinemedi');
+                }
+
+                showToast('success', 'Ders başarıyla silindi');
+                await loadCourses();
+            } catch (error) {
+                showToast('error', 'Ders silinirken bir hata oluştu: ' + error.message);
+            }
+        }
+
+        async function updateCourse(event) {
+            event.preventDefault();
+            const courseId = document.getElementById('editCourseId').value;
+            const courseName = document.getElementById('editCourseName').value;
+
+            if (!courseName) {
+                showToast('error', 'Ders adı zorunludur');
+                return;
+            }
+
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                const formData = {
+                    name: courseName,
+                    departmentId: departmentData.id
+                };
+
+                const response = await fetch(`/api/courses/update?id=${courseId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ders güncellenirken hata oluştu');
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Ders güncellenemedi');
+                }
+
+                showToast('success', 'Ders başarıyla güncellendi');
+                await loadCourses();
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editCourseModal'));
+                modal.hide();
+                document.getElementById('editCourseForm').reset();
+            } catch (error) {
+                showToast('error', 'Ders güncellenirken bir hata oluştu: ' + error.message);
+            }
+        }
+
+        function showToast(type, message) {
+            const toastContainer = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+
+        function logout() {
+            localStorage.removeItem('departmentData');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

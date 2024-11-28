@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sınav Yerleri Yönetimi</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1d4ed8;
+            --background-color: #f8fafc;
+            --text-color: #000000;
+            --text-muted: #333333;
+            --text-light: #f8fafc;
+            --link-color: #000000;
+            --link-hover-color: #2563eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin-top: 60px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-light);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            padding: 5rem 2rem 2rem;
+            min-height: 100vh;
+            margin-top: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            border: none;
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            padding: 1rem 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-control {
+            border-radius: 0.5rem;
+            padding: 0.625rem 1rem;
+            border-color: #e2e8f0;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding-top: 6rem;
+                margin-top: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h1 class="h4 mb-0">Sınav Yerleri Yönetimi</h1>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex gap-3">
+                        <a href="department_admin.html" class="nav-link">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Takvim</span>
+                        </a>
+                        <a href="teacher.html" class="nav-link">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>Öğretmenler</span>
+                        </a>
+                        <a href="courses.html" class="nav-link">
+                            <i class="bi bi-book"></i>
+                            <span>Dersler</span>
+                        </a>
+                        <a href="rooms.html" class="nav-link active">
+                            <i class="bi bi-building"></i>
+                            <span>Sınav Yerleri</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="#" class="nav-link" onclick="logout()">
+                        <i class="bi bi-box-arrow-left"></i>
+                        <span>Çıkış Yap</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                        <i class="bi bi-plus-lg me-2"></i>Yeni Sınav Yeri Ekle
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Sınıf Kodu</th>
+                                    <th>Kapasite</th>
+                                    <th style="width: 100px">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomsList">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Sınav Yeri Ekle</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="roomForm" onsubmit="event.preventDefault(); addRoom();">
+                        <div class="mb-3">
+                            <label class="form-label">Sınıf Kodu</label>
+                            <input type="text" class="form-control" id="roomCode" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kapasite</label>
+                            <input type="number" class="form-control" id="capacity" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Ekle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+        if (!departmentData) {
+            window.location.href = 'login.html';
+        }
+
+        async function loadRooms() {
+            try {
+                const response = await fetch(`http://localhost:8080/api/examrooms?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    throw new Error('Sınav yerleri yüklenirken hata oluştu');
+                }
+
+                const result = await response.json();
+                const rooms = result.data;
+                const tbody = document.getElementById('roomsList');
+                tbody.innerHTML = '';
+
+                rooms.forEach(room => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${room.roomCode}</td>
+                        <td>${room.capacity}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRoom(${room.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast('error', 'Sınav yerleri yüklenirken bir hata oluştu');
+            }
+        }
+
+        async function addRoom() {
+            const roomData = {
+                roomCode: document.getElementById('roomCode').value,
+                capacity: parseInt(document.getElementById('capacity').value),
+                departmentId: departmentData.id
+            };
+
+            try {
+                const response = await fetch('http://localhost:8080/api/examrooms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify(roomData)
+                });
+
+                if (response.ok) {
+                    showToast('success', 'Sınav yeri başarıyla eklendi');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addRoomModal'));
+                    modal.hide();
+                    document.getElementById('roomForm').reset();
+                    await loadRooms();
+                } else {
+                    showToast('error', 'Sınav yeri eklenirken bir hata oluştu');
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast('error', 'Bir hata oluştu');
+            }
+        }
+
+        async function deleteRoom(id) {
+            if (!confirm('Bu sınav yerini silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/examrooms?id=${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (response.ok) {
+                    showToast('success', 'Sınav yeri başarıyla silindi');
+                    await loadRooms();
+                } else {
+                    showToast('error', 'Sınav yeri silinirken bir hata oluştu');
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast('error', 'Bir hata oluştu');
+            }
+        }
+
+        function showToast(type, message) {
+            // Bootstrap toast implementation
+            alert(message); // Temporary fallback
+        }
+
+        function logout() {
+            localStorage.removeItem('departmentData');
+            window.location.href = 'login.html';
+        }
+
+        // Load rooms when page loads
+        document.addEventListener('DOMContentLoaded', loadRooms);
+    </script>
+</body>
+</html>

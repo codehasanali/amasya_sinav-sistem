@@ -4,31 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bölüm Yönetimi</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1d4ed8;
-            --background-color: #f8fafc;
-            --text-color: #000000;
-            --text-muted: #333333;
-            --text-light: #f8fafc;
-            --sidebar-width: 280px;
-            --link-color: #000000;
-            --link-hover-color: #2563eb;
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+            --background-color: #f9fafb;
+            --text-color: #111827;
+            --text-muted: #6b7280;
+            --text-light: #ffffff;
+            --border-color: #e5e7eb;
+            --success-color: #059669;
+            --danger-color: #dc2626;
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-color);
             color: var(--text-color);
+            line-height: 1.6;
         }
 
         .header {
@@ -39,7 +37,7 @@
             width: 100%;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .header h1 {
@@ -48,136 +46,101 @@
             margin: 0;
         }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            background: white;
-            padding-top: 4.5rem;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-            z-index: 999;
-        }
-
-        .sidebar-link {
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            padding: 0.875rem 1.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-radius: 0.5rem;
-            margin: 0.25rem 1rem;
+            gap: 0.5rem;
         }
 
-        .sidebar-link:hover {
-            background-color: #f1f5f9;
-            color: var(--link-hover-color);
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+            color: var(--text-light);
         }
 
-        .sidebar-link.active {
-            background-color: #eff6ff;
-            color: var(--link-color);
-            font-weight: 500;
-        }
-
-        .sidebar-link i {
-            font-size: 1.25rem;
-            margin-right: 1rem;
-            width: 1.5rem;
-            text-align: center;
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
         }
 
         .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 5rem 2rem 2rem;
+            padding: 6rem 2rem 2rem;
             min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .calendar-container {
             background: white;
             padding: 1.5rem;
             border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .calendar-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .fc {
-            max-width: 100%;
-            background: white;
-            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
         }
 
         .fc .fc-button-primary {
-            background-color: var(--primary-color) !important;
-            border-color: var(--primary-color) !important;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             font-weight: 500;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
+            transition: all 0.3s ease;
         }
 
         .fc .fc-button-primary:hover {
-            background-color: var(--secondary-color) !important;
-            border-color: var(--secondary-color) !important;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-1px);
         }
 
         .fc .fc-button-primary:not(:disabled).fc-button-active {
-            background-color: var(--secondary-color) !important;
-            border-color: var(--secondary-color) !important;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
         }
 
         .fc-event {
+            background-color: var(--primary-color);
             border: none;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
+            padding: 0.5rem;
+            margin: 2px 0;
             border-radius: 0.375rem;
-            background-color: #eff6ff;
-            border-left: 3px solid var(--primary-color);
-            margin: 0.125rem 0;
+            font-size: 0.875rem;
+            transition: transform 0.2s ease;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.02);
         }
 
         .fc-event-title {
             font-weight: 500;
-        }
-
-        .modal-content {
-            border-radius: 1rem;
-            border: none;
-        }
-
-        .modal-header {
-            background-color: var(--primary-color);
-            color: var(--text-light) !important;
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-            padding: 1rem 1.5rem;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-            color: var(--text-color);
-        }
-
-        .modal-body label {
-            color: var(--text-color);
-            font-weight: 500;
-        }
-
-        .form-control, .form-select {
-            border-radius: 0.5rem;
-            padding: 0.625rem 1rem;
-            border-color: #e2e8f0;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+            padding: 2px 4px;
         }
 
         .btn {
-            padding: 0.625rem 1.25rem;
+            padding: 0.75rem 1.5rem;
             font-weight: 500;
             border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .btn-primary {
@@ -188,73 +151,165 @@
         .btn-primary:hover {
             background-color: var(--secondary-color);
             border-color: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            border: none;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-light);
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 2rem 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
         .toast {
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+            min-width: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .toast-header {
-            border-top-left-radius: 0.75rem;
-            border-top-right-radius: 0.75rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            padding: 0.75rem 1rem;
         }
 
-        .text-muted {
-            color: var(--text-muted) !important;
+        .toast-body {
+            padding: 1rem;
+            font-weight: 500;
+        }
+
+        .success-toast .toast-header {
+            background-color: var(--success-color);
+            color: var(--text-light);
+        }
+
+        .error-toast .toast-header {
+            background-color: var(--danger-color);
+            color: var(--text-light);
         }
 
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
+            .header {
+                padding: 0.75rem 0;
+            }
+
+            .header h1 {
+                font-size: 1.25rem;
             }
 
             .main-content {
-                margin-left: 0;
+                padding: 5rem 1rem 1rem;
             }
 
-            .sidebar.show {
-                transform: translateX(0);
+            .calendar-container {
+                padding: 1rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
             }
         }
     </style>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <h1>Bölüm Yönetim Paneli</h1>
                 </div>
-                <div class="col-md-6 text-end">
-                    <span id="currentDate"></span>
+                <div class="col-md-6">
+                    <nav class="d-flex gap-3">
+                        <a href="department_admin.html" class="nav-link active">
+                            <i class="bi bi-calendar-week"></i>
+                            <span>Takvim</span>
+                        </a>
+                        <a href="teacher.html" class="nav-link">
+                            <i class="bi bi-person-workspace"></i>
+                            <span>Öğretmenler</span>
+                        </a>
+                        <a href="courses.html" class="nav-link">
+                            <i class="bi bi-book"></i>
+                            <span>Dersler</span>
+                        </a>
+                        <a href="rooms.html" class="nav-link">
+                            <i class="bi bi-building"></i>
+                            <span>Sınav Yerleri</span>
+                        </a>
+                    </nav>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="#" class="nav-link" onclick="logout()">
+                        <i class="bi bi-box-arrow-left"></i>
+                        <span>Çıkış Yap</span>
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="sidebar">
-        <a href="department_admin.html" class="sidebar-link active">
-            <i class="bi bi-calendar-week"></i>
-            <span>Takvim</span>
-        </a>
-        <a href="teacher.html" class="sidebar-link">
-            <i class="bi bi-person-workspace"></i>
-            <span>Öğretmenler</span>
-        </a>
-        <a href="#" class="sidebar-link">
-            <i class="bi bi-book"></i>
-            <span>Dersler</span>
-        </a>
-        <a href="#" class="sidebar-link" onclick="logout()">
-            <i class="bi bi-box-arrow-left"></i>
-            <span>Çıkış Yap</span>
-        </a>
     </div>
 
     <!-- Main Content -->
@@ -262,6 +317,33 @@
         <div class="container-fluid">
             <div class="calendar-container">
                 <div id="calendar"></div>
+            </div>
+
+            <!-- Add PDF Export Section -->
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Sınav Programı Raporları</h5>
+                    <button class="btn btn-primary" onclick="exportToPDF()">
+                        <i class="bi bi-file-pdf me-2"></i>PDF İndir
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="examTableContainer" class="table-responsive">
+                        <table class="table table-striped" id="examTable">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Saat</th>
+                                    <th>Ders</th>
+                                    <th>Öğretmen</th>
+                                    <th>Sınıf</th>
+                                    <th>Gözetmenler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="examTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -361,9 +443,15 @@
                         <strong>Tarih:</strong>
                         <span id="examDate"></span>
                     </div>
-                    <div class="mb-3">
-                        <strong>Saat:</strong>
-                        <span id="examTime"></span>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Başlangıç Saati:</strong>
+                            <span id="examTime"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Bitiş Saati:</strong>
+                            <span id="examEndTime"></span>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <strong>Ders:</strong>
@@ -382,9 +470,7 @@
                         <span id="examSupervisors"></span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                </div>
+              
             </div>
         </div>
     </div>
@@ -451,7 +537,7 @@
             console.log('Handling exam event:', data);
             
             const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-            if (data.departmentId && data.departmentId !== departmentData.id) {
+            if (!departmentData || (data.departmentId && data.departmentId !== departmentData.id)) {
                 console.log('Ignoring event for different department');
                 return;
             }
@@ -464,20 +550,22 @@
                     break;
                     
                 case WS_MESSAGE_TYPES.EXAM_UPDATE:
-                    const existingEvent = calendar.getEventById(data.data.id.toString());
-                    if (existingEvent) {
-                        existingEvent.remove();
-                        calendar.addEvent(createCalendarEvent(data.data));
-                        showToast('info', 'Sınav güncellendi!');
-                    }
+                    calendar.getEvents().forEach(event => {
+                        if (event.id === data.data.id.toString()) {
+                            event.remove();
+                        }
+                    });
+                    calendar.addEvent(createCalendarEvent(data.data));
+                    showToast('info', 'Sınav güncellendi!');
                     break;
                     
                 case WS_MESSAGE_TYPES.EXAM_DELETE:
-                    const eventToDelete = calendar.getEventById(data.data.toString());
-                    if (eventToDelete) {
-                        eventToDelete.remove();
-                        showToast('warning', 'Sınav silindi!');
-                    }
+                    calendar.getEvents().forEach(event => {
+                        if (event.id === data.data.toString()) {
+                            event.remove();
+                        }
+                    });
+                    showToast('warning', 'Sınav silindi!');
                     break;
                     
                 case WS_MESSAGE_TYPES.EXAM_LIST:
@@ -557,6 +645,7 @@
                 selectable: true, // Enable date selection
                 editable: false, // Disable drag and drop
                 eventClick: function(info) {
+                    currentExamId = info.event.id; // Set the current exam ID when an event is clicked
                     showExamDetails(info.event);
                 },
                 dateClick: function(info) {
@@ -613,24 +702,43 @@
                         const supervisorsSelect = document.getElementById('supervisorsSelect');
                         const selectedSupervisors = Array.from(supervisorsSelect.selectedOptions).map(option => parseInt(option.value));
 
-                        // Convert times to ISO string format with the correct timezone
+                        // Get the time inputs
                         const startTimeStr = document.getElementById('startTime').value;
                         const endTimeStr = document.getElementById('endTime').value;
-                        
-                        // Create Date objects with the selected date and times
-                        const startDate = new Date(selectedDate + 'T' + startTimeStr);
-                        const endDate = new Date(selectedDate + 'T' + endTimeStr);
-                        
-                        // Ensure we're using local timezone
-                        const startISO = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 60000)).toISOString();
-                        const endISO = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 60000)).toISOString();
+
+                        // Create Date objects for start and end times
+                        const startDate = new Date(selectedDate);
+                        const endDate = new Date(selectedDate);
+
+                        // Parse the time strings
+                        const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+                        const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
+
+                        // Set the hours and minutes
+                        startDate.setHours(startHours, startMinutes, 0);
+                        endDate.setHours(endHours, endMinutes, 0);
+
+                        // Check for existing exams at the same time
+                        const existingEvents = calendar.getEvents();
+                        const hasConflict = existingEvents.some(event => {
+                            const eventStart = event.start;
+                            const eventEnd = event.end;
+                            return (startDate >= eventStart && startDate < eventEnd) ||
+                                   (endDate > eventStart && endDate <= eventEnd) ||
+                                   (startDate <= eventStart && endDate >= eventEnd);
+                        });
+
+                        if (hasConflict) {
+                            showToast('error', 'Bu saatte başka bir sınav bulunmaktadır!');
+                            return;
+                        }
 
                         const formData = {
                             courseId: parseInt(document.getElementById('courseSelect').value),
                             teacherId: parseInt(document.getElementById('teacherSelect').value),
                             examRoomId: parseInt(document.getElementById('roomSelect').value),
-                            startTime: startISO,
-                            endTime: endISO,
+                            startTime: startDate.toISOString(),
+                            endTime: endDate.toISOString(),
                             departmentId: departmentData.id,
                             supervisorIds: selectedSupervisors
                         };
@@ -673,49 +781,6 @@
             connectWebSocket();
         });
 
-        async function handleExamSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            
-            try {
-                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-                const formData = {
-                    courseId: parseInt(form.querySelector('#courseSelect').value),
-                    teacherId: parseInt(form.querySelector('#teacherSelect').value),
-                    examRoomId: parseInt(form.querySelector('#roomSelect').value),
-                    startTime: new Date(form.querySelector('#startTime').value),
-                    endTime: new Date(form.querySelector('#endTime').value),
-                    departmentId: departmentData.id,
-                    supervisorIds: Array.from(form.querySelector('#supervisorSelect').selectedOptions).map(option => parseInt(option.value))
-                };
-
-                const response = await fetch('/api/exams', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${departmentData.token}`
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Sınav oluşturulurken bir hata oluştu');
-                }
-
-                // Hide modal and show success message
-                const modal = bootstrap.Modal.getInstance(document.getElementById('examModal'));
-                modal.hide();
-                showToast('success', 'Sınav başarıyla oluşturuldu');
-
-                // Refresh calendar
-                calendar.refetchEvents();
-                
-            } catch (error) {
-                console.error('Sınav oluşturma hatası:', error);
-                showToast('error', 'Sınav oluşturulurken bir hata oluştu');
-            }
-        }
-
         let currentExamId = null;
 
         async function deleteExam() {
@@ -724,39 +789,42 @@
                 return;
             }
             
-            if (confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
-                try {
-                    const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-                    if (!departmentData || !departmentData.token) {
-                        throw new Error('Oturum bilgisi bulunamadı');
-                    }
+            if (!confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
+                return;
+            }
 
-                    const response = await fetch(`http://localhost:8080/api/exams/${currentExamId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${departmentData.token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            window.location.href = 'login.html';
-                            return;
-                        }
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    showToast('success', 'Sınav başarıyla silindi');
-                    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('examDetailsModal'));
-                    if (detailsModal) {
-                        detailsModal.hide();
-                    }
-                    calendar.refetchEvents();
-                } catch (error) {
-                    console.error('Sınav silme hatası:', error);
-                    showToast('error', 'Sınav silinirken bir hata oluştu: ' + error.message);
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                if (!departmentData || !departmentData.token) {
+                    throw new Error('Oturum bilgisi bulunamadı');
                 }
+
+                const response = await fetch(`/api/exams/delete?id=${currentExamId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Sınav silme işlemi başarısız');
+                }
+
+                // Close the modal
+                const detailsModal = bootstrap.Modal.getInstance(document.getElementById('examDetailsModal'));
+                if (detailsModal) {
+                    detailsModal.hide();
+                }
+
+                showToast('success', 'Sınav başarıyla silindi');
+                currentExamId = null;
+
+            } catch (error) {
+                console.error('Snav silme hatası:', error);
+                showToast('error', 'Sınav silinirken bir hata oluştu: ' + error.message);
             }
         }
 
@@ -778,13 +846,26 @@
         async function loadCourses() {
             try {
                 const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-                const response = await fetch(`/api/courses?departmentId=${departmentData.id}`, {
+                if (!departmentData || !departmentData.token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:8080/api/courses?departmentId=${departmentData.id}`, {
+                    method: 'GET',
                     headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${departmentData.token}`
                     }
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
                     throw new Error('Dersler yüklenirken hata oluştu');
                 }
 
@@ -803,58 +884,127 @@
         async function loadTeachers() {
             try {
                 const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-                if (!departmentData || !departmentData.id) {
-                    throw new Error('Departman bilgisi bulunamadı');
+                if (!departmentData) {
+                    throw new Error('Bölüm bilgisi bulunamadı');
                 }
 
-                const response = await fetch(`/api/teachers?departmentId=${departmentData.id}`, {
+                const response = await fetch(`http://localhost:8080/api/teachers/department?departmentId=${departmentData.id}`, {
                     headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${departmentData.token}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Öğretmenler yüklenirken hata oluştu');
+                    throw new Error('Failed to load teachers');
                 }
 
-                const teachers = await response.json();
-                const select = document.getElementById('teacherSelect');
+                const result = await response.json();
                 
-                if (!select) {
-                    throw new Error('Öğretmen seçim elementi bulunamadı');
+                if (!result.success) {
+                    throw new Error(result.error || 'Öğretmen verisi alınamadı');
                 }
 
-                // Öğretmen verilerini kontrol et ve varsayılan değerler ata
-                select.innerHTML = '<option value="">Öğretmen seçiniz</option>' + 
-                    teachers.map(teacher => {
-                        const title = teacher.title || '';
-                        const name = teacher.name || '';
-                        return `<option value="${teacher.id}">${title} ${name}</option>`;
-                    }).join('');
+                // Update teacher select
+                const teacherSelect = document.getElementById('teacherSelect');
+                if (teacherSelect) {
+                    teacherSelect.innerHTML = '<option value="">Öğretmen seçiniz</option>';
+                    result.data.forEach(teacher => {
+                        const option = document.createElement('option');
+                        option.value = teacher.id;
+                        option.textContent = `${teacher.title || ''} ${teacher.name}`;
+                        teacherSelect.appendChild(option);
+                    });
+                }
+
+                // Update supervisors select
+                const supervisorsSelect = document.getElementById('supervisorsSelect');
+                if (supervisorsSelect) {
+                    supervisorsSelect.innerHTML = '';
+                    result.data.forEach(teacher => {
+                        const option = document.createElement('option');
+                        option.value = teacher.id;
+                        option.textContent = `${teacher.title || ''} ${teacher.name}`;
+                        supervisorsSelect.appendChild(option);
+                    });
+                }
+
+                // Update teachers table
+                const tableBody = document.getElementById('teachersTableBody');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                    result.data.forEach(teacher => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${teacher.title || '-'}</td>
+                            <td>${teacher.name}</td>
+                            <td>${teacher.departmentName || 'Belirtilmemiş'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="editTeacher(${teacher.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${teacher.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
 
             } catch (error) {
-                console.error('Öğretmen yükleme hatası:', error);
-                showToast('error', 'Öğretmenler yüklenirken bir hata oluştu!');
+                console.error('Error loading teachers:', error);
+                showToast('error', 'Öğretmenler yüklenirken bir hata oluştu: ' + error.message);
             }
+        }
+
+        function refreshTeachers() {
+            loadTeachers();
+        }
+
+        // Call loadTeachers when the page loads and when the modal opens
+        document.addEventListener('DOMContentLoaded', loadTeachers);
+        
+        const examModal = document.getElementById('examModal');
+        if (examModal) {
+            examModal.addEventListener('show.bs.modal', loadTeachers);
         }
 
         async function loadExamRooms() {
             try {
                 const departmentData = JSON.parse(localStorage.getItem('departmentData'));
-                const response = await fetch(`/api/examrooms?departmentId=${departmentData.id}`, {
+                if (!departmentData || !departmentData.token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:8080/api/examrooms?departmentId=${departmentData.id}`, {
+                    method: 'GET',
                     headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${departmentData.token}`
                     }
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
                     throw new Error('Sınav yerleri yüklenirken hata oluştu');
                 }
 
-                const rooms = await response.json();
+                const result = await response.json();
+                if (!result.success || !result.data) {
+                    throw new Error('Invalid response format');
+                }
+
                 const select = document.getElementById('roomSelect');
                 select.innerHTML = '<option value="">Sınıf seçiniz</option>' + 
-                    rooms.map(room => 
+                    result.data.map(room => 
                         `<option value="${room.id}">${room.roomCode}</option>`
                     ).join('');
             } catch (error) {
@@ -953,6 +1103,7 @@
         }
 
         function showExamDetails(event) {
+            currentExamId = event.id; // Add this line at the beginning of the function
             const examDetailsModal = document.getElementById('examDetailsModal');
             if (!examDetailsModal) {
                 console.error('Exam details modal not found');
@@ -1067,6 +1218,149 @@
                 showToast('error', 'Sınav oluşturulurken bir hata oluştu: ' + error.message);
             }
         }
+
+        let departmentData = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Get department data from localStorage
+            departmentData = JSON.parse(localStorage.getItem('departmentData'));
+            if (!departmentData) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Initialize calendar and load data
+            await Promise.all([
+                loadExams(),
+                updateExamTable()
+            ]);
+        });
+
+        async function updateExamTable() {
+            try {
+                if (!departmentData) {
+                    throw new Error('Department data not found');
+                }
+
+                const response = await fetch(`/api/exams/list?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('departmentData');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    throw new Error('Sınavlar yüklenirken hata oluştu');
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Veri yüklenirken bir hata oluştu');
+                }
+
+                const exams = result.data;
+                const tableBody = document.getElementById('examTableBody');
+                tableBody.innerHTML = '';
+
+                exams.forEach(exam => {
+                    const startDate = new Date(exam.startTime);
+                    const endDate = new Date(exam.endTime);
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${startDate.toLocaleDateString('tr-TR')}</td>
+                        <td>${startDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})} - 
+                            ${endDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})}</td>
+                        <td>${exam.course?.name || '-'}</td>
+                        <td>${exam.teacher ? `${exam.teacher.title || ''} ${exam.teacher.name}` : '-'}</td>
+                        <td>${exam.room?.roomCode || '-'}</td>
+                        <td>${exam.supervisors?.map(s => `${s.title || ''} ${s.name}`).join(', ') || '-'}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Tablo güncelleme hatası:', error);
+                showToast('error', 'Sınav tablosu güncellenirken bir hata oluştu');
+            }
+        }
+
+        async function exportToPDF() {
+            try {
+                // First update the table to ensure we have the latest data
+                await updateExamTable();
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'mm', 'a4');
+                
+                // Add title
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.text("Sınav Programı", doc.internal.pageSize.width / 2, 20, { align: "center" });
+                
+                // Get the table element
+                const table = document.getElementById('examTable');
+                
+                // Convert table to PDF using autoTable plugin
+                doc.autoTable({
+                    html: '#examTable',
+                    startY: 30,
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 2,
+                        overflow: 'linebreak',
+                        halign: 'left'
+                    },
+                    headStyles: {
+                        fillColor: [79, 70, 229],
+                        textColor: 255,
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 25 }, // Date
+                        1: { cellWidth: 30 }, // Time
+                        2: { cellWidth: 45 }, // Course
+                        3: { cellWidth: 45 }, // Teacher
+                        4: { cellWidth: 25 }, // Room
+                        5: { cellWidth: 'auto' } // Supervisors
+                    },
+                    margin: { top: 30 }
+                });
+                
+                // Add footer with date
+                const today = new Date().toLocaleDateString('tr-TR');
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Oluşturulma Tarihi: ${today}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10, { align: "right" });
+                
+                // Save the PDF
+                doc.save('sinav-programi.pdf');
+                
+                showToast('success', 'PDF başarıyla oluşturuldu');
+            } catch (error) {
+                console.error('PDF oluşturma hatası:', error);
+                showToast('error', 'PDF oluşturulurken bir hata oluştu');
+            }
+        }
+
+        // Update exam table when exams are loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadExams();
+            updateExamTable();
+        });
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // ... existing code ...
+            
+            // Initialize the exam table
+            await updateExamTable();
+        });
     </script>
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
         <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -1074,6 +1368,15 @@
                 <div class="toast-body">
                     <i class="bi bi-info-circle me-2"></i>Bildirim
                 </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    <!-- Toast for notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body"></div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
