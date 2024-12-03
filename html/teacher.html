@@ -140,8 +140,90 @@
         @media (max-width: 768px) {
             .main-content {
                 padding-top: 6rem;
-                margin-top: 30px; /* Increased margin for mobile */
+                margin-top: 30px; 
             }
+        }
+
+        /* PDF specific styles */
+        @media print {
+            body {
+                font-family: 'DejaVu Sans', Arial, sans-serif !important;
+                background: white !important;
+                color: black !important;
+                font-size: 12pt !important;
+            }
+
+            .header, .btn, .modal, .toast-container {
+                display: none !important;
+            }
+
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            .table th {
+                background-color: #f3f4f6 !important;
+                color: black !important;
+                font-weight: bold !important;
+                border: 1px solid #ddd !important;
+                padding: 12px 8px !important;
+            }
+
+            .table td {
+                border: 1px solid #ddd !important;
+                padding: 10px 8px !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            .pdf-header {
+                text-align: center;
+                margin-bottom: 20px;
+                display: block !important;
+            }
+
+            .pdf-header h1 {
+                font-size: 24pt !important;
+                margin-bottom: 10px !important;
+            }
+
+            .pdf-header p {
+                font-size: 12pt !important;
+                color: #666 !important;
+            }
+
+            .pdf-footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 10pt;
+                color: #666;
+                padding: 10px;
+                display: block !important;
+            }
+
+            @page {
+                size: A4;
+                margin: 2cm;
+            }
+        }
+
+        .pdf-header, .pdf-footer {
+            display: none;
         }
     </style>
 </head>
@@ -185,11 +267,18 @@
 
     <!-- Main Content -->
     <div class="main-content">
+        <div class="pdf-header">
+            <h1>Öğretmen Listesi</h1>
+            <p>Oluşturulma Tarihi: <span id="pdfDate"></span></p>
+        </div>
         <div class="container">
             <div class="row mb-4">
                 <div class="col">
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTeacherModal">
                         <i class="bi bi-plus-lg me-2"></i>Yeni Öğretmen Ekle
+                    </button>
+                    <button class="btn btn-primary" onclick="exportToPDF()">
+                        <i class="bi bi-file-pdf me-2"></i>PDF Olarak İndir
                     </button>
                 </div>
             </div>
@@ -216,6 +305,10 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="pdf-footer">
+        <p> 2024 Amasya Üniversitesi - Tüm hakları saklıdır.</p>
     </div>
 
     <div class="modal fade" id="addTeacherModal" tabindex="-1">
@@ -465,7 +558,7 @@
                     title: document.getElementById('teacherTitle').value,
                     email: document.getElementById('teacherEmail').value,
                     phone: document.getElementById('teacherPhone').value,
-                    departmentId: departmentData.id
+                    departmentId: parseInt(departmentData.id)
                 };
 
                 const response = await fetch('/api/teachers/create', {
@@ -485,6 +578,11 @@
                     }
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Öğretmen eklenirken hata oluştu');
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Öğretmen eklenemedi');
                 }
 
                 showToast('success', 'Öğretmen başarıyla eklendi');
@@ -571,9 +669,48 @@
             }
         }
 
-        function logout() {
-            localStorage.removeItem('departmentData');
-            window.location.href = 'login.html';
+        async function exportToPDF() {
+            try {
+                // Update PDF generation date
+                const now = new Date();
+                document.getElementById('pdfDate').textContent = now.toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Create a clone of the table for PDF
+                const originalTable = document.querySelector('.table');
+                const pdfTable = originalTable.cloneNode(true);
+                
+                // Remove action column from PDF
+                const actionColumnIndex = Array.from(pdfTable.querySelector('thead tr').children)
+                    .findIndex(th => th.textContent.trim() === 'İşlemler');
+                if (actionColumnIndex !== -1) {
+                    Array.from(pdfTable.querySelectorAll('tr')).forEach(row => {
+                        if (row.children[actionColumnIndex]) {
+                            row.children[actionColumnIndex].remove();
+                        }
+                    });
+                }
+
+                // Temporarily replace the original table with the PDF version
+                const tableParent = originalTable.parentNode;
+                tableParent.replaceChild(pdfTable, originalTable);
+
+                // Print the document
+                window.print();
+
+                // Restore the original table
+                tableParent.replaceChild(originalTable, pdfTable);
+
+                showToast('success', 'PDF başarıyla oluşturuldu');
+            } catch (error) {
+                console.error('PDF oluşturma hatası:', error);
+                showToast('error', 'PDF oluşturulurken bir hata oluştu');
+            }
         }
     </script>
 </body>

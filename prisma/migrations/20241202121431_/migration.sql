@@ -23,8 +23,10 @@ CREATE TABLE "Course" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
     "departmentId" INTEGER NOT NULL,
+    "teacherId" INTEGER NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Course_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Course_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Course_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "Teacher" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -34,10 +36,8 @@ CREATE TABLE "Teacher" (
     "title" TEXT NOT NULL,
     "email" TEXT,
     "phone" TEXT,
-    "departmentId" INTEGER NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Teacher_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
@@ -48,7 +48,6 @@ CREATE TABLE "Exam" (
     "endTime" DATETIME NOT NULL,
     "date" DATETIME NOT NULL,
     "maxStudentCount" INTEGER NOT NULL DEFAULT 0,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
     "courseId" INTEGER NOT NULL,
     "departmentId" INTEGER NOT NULL,
     "teacherInChargeId" INTEGER NOT NULL,
@@ -57,6 +56,14 @@ CREATE TABLE "Exam" (
     CONSTRAINT "Exam_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Exam_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Exam_teacherInChargeId_fkey" FOREIGN KEY ("teacherInChargeId") REFERENCES "Teacher" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "_DepartmentToTeacher" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+    CONSTRAINT "_DepartmentToTeacher_A_fkey" FOREIGN KEY ("A") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "_DepartmentToTeacher_B_fkey" FOREIGN KEY ("B") REFERENCES "Teacher" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -80,6 +87,12 @@ CREATE UNIQUE INDEX "Department_adminUsername_key" ON "Department"("adminUsernam
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ExamRoom_roomCode_departmentId_key" ON "ExamRoom"("roomCode", "departmentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_DepartmentToTeacher_AB_unique" ON "_DepartmentToTeacher"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_DepartmentToTeacher_B_index" ON "_DepartmentToTeacher"("B");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_ExamSupervisors_AB_unique" ON "_ExamSupervisors"("A", "B");

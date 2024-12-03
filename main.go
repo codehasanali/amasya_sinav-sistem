@@ -443,10 +443,7 @@ func main() {
 	}()
 
 	// Örnek verileri oluştur
-	ctx := context.Background()
-	createSampleData(ctx, client)
 
-	// Create a single hub instance
 	hub := newHub()
 	go hub.run()
 
@@ -483,7 +480,7 @@ func main() {
 	mux.HandleFunc("/api/examrooms", handleExamRooms(client, hub))
 	mux.HandleFunc("/api/department/login", handleDepartmentLogin(client))
 	mux.HandleFunc("/api/exams/list", handleExamsWithNotification(client, hub))
-	mux.HandleFunc("/api/exams/create", handleCreateExam(client, hub))
+	mux.HandleFunc("/api/exams/create", handleExamCreate(client, hub))
 	mux.HandleFunc("/api/exams/details", handleExamDetails(client))
 	mux.HandleFunc("/api/teachers/department", handleTeachersByDepartment(client))
 	mux.HandleFunc("/api/teachers/delete", handleDeleteTeacher(client, hub))
@@ -498,6 +495,13 @@ func main() {
 	mux.HandleFunc("/api/superadmin/departments/create", handleCreateDepartment(client))
 	mux.HandleFunc("/api/superadmin/departments/delete", handleDeleteDepartment(client))
 	mux.HandleFunc("/api/departments", handleDepartments(client))
+	mux.HandleFunc("/api/teachers/add-department", handleAddTeacherDepartment(client, hub))
+	mux.HandleFunc("/api/teachers/remove", handleRemoveTeacherDepartment(client, hub))
+	mux.HandleFunc("/api/exams/check-room-availability", handleCheckRoomAvailability(client))
+
+	mux.HandleFunc("/api/exams/check-teacher-availability", handleCheckTeacherAvailability(client))
+
+	mux.HandleFunc("/api/teachers/all", handleGetAllTeachers(client))
 
 	mux.HandleFunc("/ws", handleWebSocket(hub))
 
@@ -534,9 +538,11 @@ func handleDeleteTeacher(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 
 		ctx := context.Background()
 
-		// Get department ID before deleting the teacher
+		// Get teacher with departments before deleting
 		teacher, err := client.Teacher.FindUnique(
 			db.Teacher.ID.Equals(id),
+		).With(
+			db.Teacher.Departments.Fetch(),
 		).Exec(ctx)
 
 		if err != nil {
@@ -550,7 +556,8 @@ func handleDeleteTeacher(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		departmentID := teacher.DepartmentID
+		// Store departments for broadcasting
+		departments := teacher.Departments()
 
 		// Delete the teacher
 		_, err = client.Teacher.FindUnique(
@@ -563,13 +570,14 @@ func handleDeleteTeacher(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		// Broadcast the delete event
-		broadcastUpdate(hub, TeacherDelete, map[string]interface{}{
-			"id": id,
-		}, departmentID)
+		// Broadcast delete event to all related departments
+		for _, dept := range departments {
+			broadcastUpdate(hub, TeacherDelete, map[string]interface{}{
+				"id": id,
+			}, dept.ID)
+		}
 
-		// Send successful response
-		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
 			"message": "Teacher deleted successfully",
@@ -577,76 +585,102 @@ func handleDeleteTeacher(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 	}
 }
 
-func handleCreateExam(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
+func handleExamCreate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		ctx := context.Background()
-		var examData ExamRequest
+		var examData struct {
+			Name          string    `json:"name"`
+			CourseID      int       `json:"courseId"`
+			TeacherID     int       `json:"teacherId"`
+			ExamRoomIds   []int     `json:"examRoomIds"`
+			StartTime     time.Time `json:"startTime"`
+			EndTime       time.Time `json:"endTime"`
+			Date          time.Time `json:"date"`
+			DepartmentID  int       `json:"departmentId"`
+			SupervisorIds []int     `json:"supervisorIds"`
+		}
+
 		if err := json.NewDecoder(r.Body).Decode(&examData); err != nil {
-			log.Printf("Error decoding exam data: %v", err)
-			sendErrorResponse(w, fmt.Sprintf("Invalid exam data: %v", err), http.StatusBadRequest)
+			sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Log the received data
-		log.Printf("Received exam data: %+v", examData)
-
-		// Validate required fields
-		if examData.CourseID == 0 || examData.TeacherID == 0 || examData.ExamRoomID == 0 || examData.DepartmentID == 0 {
-			log.Printf("Missing required fields: CourseID=%d, TeacherID=%d, ExamRoomID=%d, DepartmentID=%d",
-				examData.CourseID, examData.TeacherID, examData.ExamRoomID, examData.DepartmentID)
-			sendErrorResponse(w, "Missing required fields", http.StatusBadRequest)
+		// Validation
+		if examData.Name == "" {
+			sendErrorResponse(w, "Exam name is required", http.StatusBadRequest)
+			return
+		}
+		if examData.CourseID == 0 {
+			sendErrorResponse(w, "Course ID is required", http.StatusBadRequest)
+			return
+		}
+		if examData.TeacherID == 0 {
+			sendErrorResponse(w, "Teacher ID is required", http.StatusBadRequest)
+			return
+		}
+		if len(examData.ExamRoomIds) == 0 {
+			sendErrorResponse(w, "At least one exam room is required", http.StatusBadRequest)
+			return
+		}
+		if examData.StartTime.IsZero() {
+			sendErrorResponse(w, "Start time is required", http.StatusBadRequest)
+			return
+		}
+		if examData.EndTime.IsZero() {
+			sendErrorResponse(w, "End time is required", http.StatusBadRequest)
+			return
+		}
+		if examData.Date.IsZero() {
+			sendErrorResponse(w, "Date is required", http.StatusBadRequest)
+			return
+		}
+		if examData.DepartmentID == 0 {
+			sendErrorResponse(w, "Department ID is required", http.StatusBadRequest)
 			return
 		}
 
-		// Create exam with relations
+		ctx := context.Background()
+
+		// Create exam with initial data
 		exam, err := client.Exam.CreateOne(
-			db.Exam.Name.Set(fmt.Sprintf("%s Sınavı", examData.StartTime.Format("02.01.2006"))),
+			db.Exam.Name.Set(examData.Name),
 			db.Exam.StartTime.Set(examData.StartTime),
 			db.Exam.EndTime.Set(examData.EndTime),
-			db.Exam.Date.Set(examData.StartTime),
-			db.Exam.Course.Link(
-				db.Course.ID.Equals(examData.CourseID),
-			),
-			db.Exam.Department.Link(
-				db.Department.ID.Equals(examData.DepartmentID),
-			),
-			db.Exam.TeacherInCharge.Link(
-				db.Teacher.ID.Equals(examData.TeacherID),
-			),
-			db.Exam.MaxStudentCount.Set(0),
-			db.Exam.Status.Set("PENDING"),
+			db.Exam.Date.Set(examData.Date),
+			db.Exam.Course.Link(db.Course.ID.Equals(examData.CourseID)),
+			db.Exam.Department.Link(db.Department.ID.Equals(examData.DepartmentID)),
+			db.Exam.TeacherInCharge.Link(db.Teacher.ID.Equals(examData.TeacherID)),
 		).Exec(ctx)
 
 		if err != nil {
-			log.Printf("Error creating exam: %v", err)
 			sendErrorResponse(w, fmt.Sprintf("Error creating exam: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		// Link exam room in a separate step
-		exam, err = client.Exam.FindUnique(
-			db.Exam.ID.Equals(exam.ID),
-		).Update(
-			db.Exam.ExamRooms.Link(
-				db.ExamRoom.ID.Equals(examData.ExamRoomID),
-			),
-		).Exec(ctx)
+		// Link exam rooms
+		for _, roomID := range examData.ExamRoomIds {
+			_, err = client.Exam.FindUnique(
+				db.Exam.ID.Equals(exam.ID),
+			).Update(
+				db.Exam.ExamRooms.Link(
+					db.ExamRoom.ID.Equals(roomID),
+				),
+			).Exec(ctx)
 
-		if err != nil {
-			log.Printf("Error linking exam room: %v", err)
-			sendErrorResponse(w, fmt.Sprintf("Error linking exam room: %v", err), http.StatusInternalServerError)
-			return
+			if err != nil {
+				log.Printf("Error linking room %d: %v", roomID, err)
+				continue
+			}
 		}
 
-		// Add supervisors one by one in separate steps
-		if len(examData.SupervisorIDs) > 0 {
-			for _, supervisorID := range examData.SupervisorIDs {
-				exam, err = client.Exam.FindUnique(
+		// Link supervisors if any
+		if len(examData.SupervisorIds) > 0 {
+			for _, supervisorID := range examData.SupervisorIds {
+				_, err = client.Exam.FindUnique(
 					db.Exam.ID.Equals(exam.ID),
 				).Update(
 					db.Exam.Supervisors.Link(
@@ -655,36 +689,19 @@ func handleCreateExam(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 				).Exec(ctx)
 
 				if err != nil {
-					log.Printf("Error adding supervisor %d: %v", supervisorID, err)
-					sendErrorResponse(w, fmt.Sprintf("Error adding supervisor %d: %v", supervisorID, err), http.StatusInternalServerError)
-					return
+					log.Printf("Error linking supervisor %d: %v", supervisorID, err)
+					continue
 				}
 			}
 		}
 
-		// Fetch the complete exam data with all relations
-		exam, err = client.Exam.FindUnique(
-			db.Exam.ID.Equals(exam.ID),
-		).With(
-			db.Exam.Course.Fetch(),
-			db.Exam.TeacherInCharge.Fetch(),
-			db.Exam.ExamRooms.Fetch(),
-			db.Exam.Supervisors.Fetch(),
-			db.Exam.Department.Fetch(),
-		).Exec(ctx)
-
-		if err != nil {
-			log.Printf("Error fetching complete exam data: %v", err)
-			sendErrorResponse(w, fmt.Sprintf("Error fetching complete exam data: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		// Broadcast the create event
-		broadcastUpdate(hub, ExamCreate, exam, examData.DepartmentID)
+		notifyExamChange(hub, ExamCreate, exam, examData.DepartmentID)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(exam)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"data":    exam,
+		})
 	}
 }
 
@@ -695,10 +712,6 @@ func handleTeachersByDepartment(client *db.PrismaClient) http.HandlerFunc {
 			return
 		}
 
-		// Set headers
-		w.Header().Set("Content-Type", "application/json")
-
-		// Get department ID from query params
 		departmentId := r.URL.Query().Get("departmentId")
 		if departmentId == "" {
 			sendErrorResponse(w, "Department ID is required", http.StatusBadRequest)
@@ -713,11 +726,12 @@ func handleTeachersByDepartment(client *db.PrismaClient) http.HandlerFunc {
 
 		ctx := context.Background()
 
-		// Fetch teachers for the department
 		teachers, err := client.Teacher.FindMany(
-			db.Teacher.DepartmentID.Equals(deptID),
+			db.Teacher.Departments.Some(
+				db.Department.ID.Equals(deptID),
+			),
 		).With(
-			db.Teacher.Department.Fetch(),
+			db.Teacher.Departments.Fetch(),
 		).Exec(ctx)
 
 		if err != nil {
@@ -726,31 +740,54 @@ func handleTeachersByDepartment(client *db.PrismaClient) http.HandlerFunc {
 			return
 		}
 
-		// Format response
 		type TeacherResponse struct {
-			ID             int    `json:"id"`
-			Name           string `json:"name"`
-			Title          string `json:"title"`
-			DepartmentID   int    `json:"departmentId"`
-			DepartmentName string `json:"departmentName,omitempty"`
+			ID            int    `json:"id"`
+			Name          string `json:"name"`
+			Title         string `json:"title"`
+			Email         string `json:"email,omitempty"`
+			Phone         string `json:"phone,omitempty"`
+			Departments   []struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+			} `json:"departments"`
 		}
 
 		var response []TeacherResponse
 		for _, teacher := range teachers {
-			dept := teacher.Department()
-			teacherResp := TeacherResponse{
-				ID:           teacher.ID,
-				Name:         teacher.Name,
-				Title:        teacher.Title,
-				DepartmentID: teacher.DepartmentID,
+			departments := teacher.Departments()
+			deptList := make([]struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+			}, len(departments))
+
+			for i, dept := range departments {
+				deptList[i] = struct {
+					ID   int    `json:"id"`
+					Name string `json:"name"`
+				}{
+					ID:   dept.ID,
+					Name: dept.Name,
+				}
 			}
-			if dept != nil {
-				teacherResp.DepartmentName = dept.Name
+
+			teacherResp := TeacherResponse{
+				ID:    teacher.ID,
+				Name:  teacher.Name,
+				Title: teacher.Title,
+				Email: func() string {
+					email, _ := teacher.Email()
+					return email
+				}(),
+				Phone: func() string {
+					phone, _ := teacher.Phone()
+					return phone
+				}(),
+				Departments: deptList,
 			}
 			response = append(response, teacherResp)
 		}
 
-		// Send successful response
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
 			"data":    response,
@@ -758,7 +795,71 @@ func handleTeachersByDepartment(client *db.PrismaClient) http.HandlerFunc {
 	}
 }
 
-// New handler for exam details
+func handleCheckTeacherAvailability(client *db.PrismaClient) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
+
+        var request struct {
+            TeacherID    int    `json:"teacherId"`
+            StartTime    string `json:"startTime"`
+            EndTime      string `json:"endTime"`
+            DepartmentID int    `json:"departmentId"`
+        }
+
+        if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+            sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+            return
+        }
+
+        startTime, err := time.Parse(time.RFC3339, request.StartTime)
+        if err != nil {
+            sendErrorResponse(w, "Invalid start time format", http.StatusBadRequest)
+            return
+        }
+
+        endTime, err := time.Parse(time.RFC3339, request.EndTime)
+        if err != nil {
+            sendErrorResponse(w, "Invalid end time format", http.StatusBadRequest)
+            return
+        }
+
+        ctx := context.Background()
+
+        // Check for existing exams where this teacher is involved
+        exams, err := client.Exam.FindMany(
+            db.Exam.And(
+                db.Exam.Or(
+                    db.Exam.TeacherInCharge.Where(
+                        db.Teacher.ID.Equals(request.TeacherID),
+                    ),
+                    db.Exam.Supervisors.Some(
+                        db.Teacher.ID.Equals(request.TeacherID),
+                    ),
+                ),
+                db.Exam.StartTime.Lt(endTime),
+                db.Exam.EndTime.Gt(startTime),
+                db.Exam.DepartmentID.Equals(request.DepartmentID),
+            ),
+        ).Exec(ctx)
+
+        if err != nil {
+            log.Printf("Error checking teacher availability: %v", err)
+            sendErrorResponse(w, "Error checking teacher availability", http.StatusInternalServerError)
+            return
+        }
+
+        // Teacher is available if no conflicting exams found
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "success": true,
+            "available": len(exams) == 0,
+        })
+    }
+}
+
 func handleExamDetails(client *db.PrismaClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -872,8 +973,6 @@ func handleCourses(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 	}
 }
 
-
-
 type ExamRequest struct {
 	CourseID      int       `json:"courseId"`
 	TeacherID     int       `json:"teacherId"`
@@ -882,79 +981,6 @@ type ExamRequest struct {
 	EndTime       time.Time `json:"endTime"`
 	DepartmentID  int       `json:"departmentId"`
 	SupervisorIDs []int     `json:"supervisorIds"`
-}
-
-func createSampleData(ctx context.Context, client *db.PrismaClient) {
-	department, err := client.Department.CreateOne(
-		db.Department.Name.Set("Bilgisayar Mühendisliği"),
-		db.Department.AdminUsername.Set("pcmuh_"+strconv.FormatInt(time.Now().Unix(), 10)),
-		db.Department.AdminPassword.Set("pcmuh123"),
-	).Exec(ctx)
-
-	if err != nil {
-		log.Printf("Bölüm oluşturma hatası: %v", err)
-		return
-	}
-
-	// Sınav yerleri oluşturma
-	examRooms := []struct {
-		code string
-	}{
-		{"A101"},
-		{"A102"},
-		{"A130"},
-	}
-
-	for _, room := range examRooms {
-		_, err = client.ExamRoom.CreateOne(
-			db.ExamRoom.RoomCode.Set(room.code),
-			db.ExamRoom.Department.Link(db.Department.ID.Equals(department.ID)),
-		).Exec(ctx)
-		if err != nil {
-			log.Printf("Sınav yeri oluşturma hatası: %v", err)
-		}
-	}
-
-	// Öretmenler oluşturma
-	teachers := []struct {
-		name  string
-		title string
-	}{
-		{"Hasan Ali Arıkan", "Prof."},
-		{"Mehmet Yılmaz", "Doç."},
-		{"Ayşe Demir", "Dr."},
-	}
-
-	for _, t := range teachers {
-		_, err = client.Teacher.CreateOne(
-			db.Teacher.Name.Set(t.name),
-			db.Teacher.Title.Set(t.title),
-			db.Teacher.Department.Link(db.Department.ID.Equals(department.ID)),
-		).Exec(ctx)
-		if err != nil {
-			log.Printf("Öğretmen oluşturma hatası: %v", err)
-		}
-	}
-
-	// Dersler oluşturma
-	courses := []string{
-		"Bilgisayar Mühendisliğine Giriş",
-		"Veri Yapıları",
-		"Algoritma Analizi",
-		"Veritabanı Yönetim Sistemleri",
-	}
-
-	for _, courseName := range courses {
-		_, err = client.Course.CreateOne(
-			db.Course.Name.Set(courseName),
-			db.Course.Department.Link(db.Department.ID.Equals(department.ID)),
-		).Exec(ctx)
-		if err != nil {
-			log.Printf("Ders oluşturma hatası: %v", err)
-		}
-	}
-
-	log.Println("Örnek veriler başarıyla oluşturuldu!")
 }
 
 type TeacherRequest struct {
@@ -973,41 +999,6 @@ func handleTeacherCreate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		// Get authorization token
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		// Extract token
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		parts := strings.Split(token, "_")
-		if len(parts) != 2 {
-			sendErrorResponse(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		// Get department ID from token
-		departmentID, err := strconv.Atoi(parts[0])
-		if err != nil {
-			sendErrorResponse(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		ctx := context.Background()
-
-		// Verify department exists
-		department, err := client.Department.FindUnique(
-			db.Department.ID.Equals(departmentID),
-		).Exec(ctx)
-
-		if err != nil || department == nil {
-			sendErrorResponse(w, "Department not found", http.StatusUnauthorized)
-			return
-		}
-
-		// Parse request body
 		var teacherData TeacherRequest
 		if err := json.NewDecoder(r.Body).Decode(&teacherData); err != nil {
 			sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
@@ -1020,36 +1011,54 @@ func handleTeacherCreate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		// Create teacher d
+		ctx := context.Background()
+
+		// Create teacher with all fields
 		teacher, err := client.Teacher.CreateOne(
 			db.Teacher.Name.Set(teacherData.Name),
 			db.Teacher.Title.Set(teacherData.Title),
-			db.Teacher.Department.Link(
-				db.Department.ID.Equals(departmentID),
-			),
+			db.Teacher.Email.Set(teacherData.Email),
+			db.Teacher.Phone.Set(teacherData.Phone),
 		).Exec(ctx)
-
-		if err == nil && teacherData.Email != "" {
-			teacher, err = client.Teacher.FindUnique(
-				db.Teacher.ID.Equals(teacher.ID),
-			).Update(
-				db.Teacher.Email.Set(teacherData.Email),
-				db.Teacher.Phone.Set(teacherData.Phone),
-			).Exec(ctx)
-		}
 
 		if err != nil {
 			sendErrorResponse(w, fmt.Sprintf("Error creating teacher: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		// Return success response
+		// Link teacher to department immediately after creation
+		_, err = client.Teacher.FindUnique(
+			db.Teacher.ID.Equals(teacher.ID),
+		).Update(
+			db.Teacher.Departments.Link(
+				db.Department.ID.Equals(teacherData.DepartmentId),
+			),
+		).Exec(ctx)
+
+		if err != nil {
+			log.Printf("Error linking department: %v", err)
+			// Even if department linking fails, we don't want to fail the whole request
+		}
+
+		// Fetch updated teacher with departments
+		updatedTeacher, err := client.Teacher.FindUnique(
+			db.Teacher.ID.Equals(teacher.ID),
+		).With(
+			db.Teacher.Departments.Fetch(),
+		).Exec(ctx)
+
+		if err != nil {
+			sendErrorResponse(w, "Error fetching updated teacher", http.StatusInternalServerError)
+			return
+		}
+
+		// Broadcast update
+		broadcastUpdate(hub, TeacherCreate, updatedTeacher, teacherData.DepartmentId)
+
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
-			"message": "Teacher created successfully",
-			"data":    teacher,
+			"data":    updatedTeacher,
 		})
 	}
 }
@@ -1098,10 +1107,11 @@ func handleTeacherUpdate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 
 		ctx := context.Background()
 
-		// First verify that the teacher exists and belongs to the department
 		existingTeacher, err := client.Teacher.FindFirst(
 			db.Teacher.ID.Equals(id),
-			db.Teacher.DepartmentID.Equals(departmentID),
+			db.Teacher.Departments.Some(
+				db.Department.ID.Equals(departmentID),
+			),
 		).Exec(ctx)
 
 		if err != nil || existingTeacher == nil {
@@ -1109,14 +1119,12 @@ func handleTeacherUpdate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		// Parse request body
 		var teacherData TeacherRequest
 		if err := json.NewDecoder(r.Body).Decode(&teacherData); err != nil {
 			sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Validate required fields
 		if teacherData.Name == "" || teacherData.Title == "" {
 			sendErrorResponse(w, "Name and title are required", http.StatusBadRequest)
 			return
@@ -1137,24 +1145,20 @@ func handleTeacherUpdate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		// Get department info in a separate query
-		department, err := client.Department.FindUnique(
-			db.Department.ID.Equals(departmentID),
-		).Exec(ctx)
-
-		if err != nil {
-			log.Printf("Error fetching department: %v", err)
-		}
-
 		// Prepare response data
 		responseData := map[string]interface{}{
-			"id":             teacher.ID,
-			"name":           teacher.Name,
-			"title":          teacher.Title,
-			"email":          teacher.Email,
-			"phone":          teacher.Phone,
-			"departmentId":   teacher.DepartmentID,
-			"departmentName": department.Name,
+			"id":    teacher.ID,
+			"name":  teacher.Name,
+			"title": teacher.Title,
+			"email": func() string {
+				email, _ := teacher.Email()
+				return email
+			}(),
+			"phone": func() string {
+				phone, _ := teacher.Phone()
+				return phone
+			}(),
+			"departments": teacher.Departments(),
 		}
 
 		// Return success response
@@ -1395,7 +1399,7 @@ func handleCourseUpdate(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
 		responseData := map[string]interface{}{
 			"id":             course.ID,
 			"name":           course.Name,
-			"departmentId":   course.DepartmentID,
+			"departmentId": course.DepartmentID,
 			"departmentName": department.Name,
 		}
 
@@ -1567,7 +1571,6 @@ func handleDepartments(client *db.PrismaClient) http.HandlerFunc {
             return
         }
 
-        // Verify super admin token
         authHeader := r.Header.Get("Authorization")
         if !verifySuperAdminToken(authHeader) {
             sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
@@ -1605,7 +1608,6 @@ func handleCreateDepartment(client *db.PrismaClient) http.HandlerFunc {
             return
         }
 
-        // Verify super admin token
         authHeader := r.Header.Get("Authorization")
         if !verifySuperAdminToken(authHeader) {
             sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
@@ -1702,5 +1704,197 @@ func verifySuperAdminToken(authHeader string) bool {
 
     return true
 }
+func handleAddTeacherDepartment(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
 
+        var data struct {
+            TeacherID    int `json:"teacherId"`
+            DepartmentID int `json:"departmentId"`
+        }
 
+        if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+            sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+            return
+        }
+
+        ctx := context.Background()
+
+        // First update the teacher-department relationship
+        _, err := client.Teacher.FindUnique(
+            db.Teacher.ID.Equals(data.TeacherID),
+        ).Update(
+            db.Teacher.Departments.Link(
+                db.Department.ID.Equals(data.DepartmentID),
+            ),
+        ).Exec(ctx)
+
+        if err != nil {
+            log.Printf("Error adding department: %v", err)
+            sendErrorResponse(w, "Error adding department to teacher", http.StatusInternalServerError)
+            return
+        }
+
+        // Then fetch the updated teacher with departments
+        teacherWithDepts, err := client.Teacher.FindUnique(
+            db.Teacher.ID.Equals(data.TeacherID),
+        ).With(
+            db.Teacher.Departments.Fetch(),
+        ).Exec(ctx)
+
+        if err != nil {
+            log.Printf("Error fetching updated teacher: %v", err)
+            sendErrorResponse(w, "Error fetching updated teacher data", http.StatusInternalServerError)
+            return
+        }
+
+        // WebSocket ile güncelleme gönder
+        broadcastUpdate(hub, TeacherUpdate, teacherWithDepts, data.DepartmentID)
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "success": true,
+            "data":    teacherWithDepts,
+        })
+    }
+}
+
+func handleRemoveTeacherDepartment(client *db.PrismaClient, hub *Hub) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
+
+        var data struct {
+            TeacherID    int `json:"teacherId"`
+            DepartmentID int `json:"departmentId"`
+        }
+
+        if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+            sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+            return
+        }
+
+        ctx := context.Background()
+
+        teacher, err := client.Teacher.FindUnique(
+            db.Teacher.ID.Equals(data.TeacherID),
+        ).Update(
+            db.Teacher.Departments.Unlink(
+                db.Department.ID.Equals(data.DepartmentID),
+            ),
+        ).Exec(ctx)
+
+        if err != nil {
+            sendErrorResponse(w, fmt.Sprintf("Error removing department: %v", err), http.StatusInternalServerError)
+            return
+        }
+
+        // Broadcast update
+        broadcastUpdate(hub, TeacherUpdate, teacher, data.DepartmentID)
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "success": true,
+            "data":    teacher,
+        })
+    }
+}
+
+func handleGetAllTeachers(client *db.PrismaClient) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodGet {
+            sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
+
+        // Verify super admin token
+        authHeader := r.Header.Get("Authorization")
+        if !verifySuperAdminToken(authHeader) {
+            sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+
+        ctx := context.Background()
+
+        // Fetch all teachers with their departments
+        teachers, err := client.Teacher.FindMany().With(
+            db.Teacher.Departments.Fetch(),
+        ).Exec(ctx)
+
+        if err != nil {
+            sendErrorResponse(w, fmt.Sprintf("Error fetching teachers: %v", err), http.StatusInternalServerError)
+            return
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "success": true,
+            "data":    teachers,
+        })
+    }
+}
+
+func handleCheckRoomAvailability(client *db.PrismaClient) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != http.MethodPost {
+            sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+            return
+        }
+
+        var request struct {
+            RoomIDs      []int    `json:"roomIds"`
+            StartTime    string   `json:"startTime"`
+            EndTime      string   `json:"endTime"`
+            DepartmentID int      `json:"departmentId"`
+        }
+
+        if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+            sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+            return
+        }
+
+        startTime, err := time.Parse(time.RFC3339, request.StartTime)
+        if err != nil {
+            sendErrorResponse(w, "Invalid start time format", http.StatusBadRequest)
+            return
+        }
+
+        endTime, err := time.Parse(time.RFC3339, request.EndTime)
+        if err != nil {
+            sendErrorResponse(w, "Invalid end time format", http.StatusBadRequest)
+            return
+        }
+
+        ctx := context.Background()
+
+        // Check for existing exams with the selected rooms
+        exams, err := client.Exam.FindMany(
+            db.Exam.And(
+                db.Exam.ExamRooms.Some(
+                    db.ExamRoom.ID.In(request.RoomIDs),
+                ),
+                db.Exam.StartTime.Lt(endTime),
+                db.Exam.EndTime.Gt(startTime),
+                db.Exam.DepartmentID.Equals(request.DepartmentID),
+            ),
+        ).Exec(ctx)
+
+        if err != nil {
+            log.Printf("Error checking room availability: %v", err)
+            sendErrorResponse(w, "Error checking room availability", http.StatusInternalServerError)
+            return
+        }
+
+        // Rooms are available if no conflicting exams found
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "success": true,
+            "available": len(exams) == 0,
+        })
+    }
+}

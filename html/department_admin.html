@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -196,7 +197,8 @@
             gap: 0.5rem;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             border: 1px solid var(--border-color);
@@ -204,7 +206,8 @@
             font-size: 0.95rem;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
@@ -274,6 +277,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
+
 <body>
     <!-- Header -->
     <div class="header">
@@ -354,13 +358,21 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="examModalLabel">Sınav Oluştur</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="examForm" class="needs-validation" novalidate>
                         <div class="mb-3">
                             <label class="form-label">Seçilen Tarih:</label>
                             <div id="selectedDateDisplay" class="form-text text-primary fw-bold"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-pencil me-2"></i>Sınav Adı
+                            </label>
+                            <input type="text" id="examName" class="form-control" required>
+                            <div class="invalid-feedback">Lütfen sınav adını girin</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">
@@ -385,16 +397,18 @@
                             <select class="form-select" id="supervisorsSelect" multiple data-live-search="true">
                                 <!-- Options will be populated dynamically -->
                             </select>
-                            <small class="form-text text-muted">Birden fazla gözetmen seçmek için Ctrl/Cmd tuşuna basılı tutarak seçim yapın.</small>
+                            <small class="form-text text-muted">Birden fazla gözetmen seçmek için Ctrl/Cmd tuşuna basılı
+                                tutarak seçim yapın.</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">
-                                <i class="bi bi-building me-2"></i>Sınav Yeri
+                                <i class="bi bi-building me-2"></i>Sınav Yerleri
                             </label>
-                            <select id="roomSelect" class="form-select" required>
-                                <option value="">Sınıf seçiniz</option>
+                            <select id="roomSelect" class="form-select" multiple required>
+                                <option value="">Sınav yeri seçiniz</option>
                             </select>
-                            <div class="invalid-feedback">Lütfen bir sınıf seçin</div>
+                            <small class="form-text text-muted">Birden fazla sınav yeri seçmek için Ctrl/Cmd tuşuna basılı tutun</small>
+                            <div class="invalid-feedback">En az bir sınav yeri seçmelisiniz</div>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -470,7 +484,7 @@
                         <span id="examSupervisors"></span>
                     </div>
                 </div>
-              
+
             </div>
         </div>
     </div>
@@ -499,7 +513,7 @@
             }
 
             ws = new WebSocket(`ws://localhost:8080/ws?departmentId=${departmentData.id}`);
-            
+
             ws.onopen = () => {
                 console.log('WebSocket bağlantısı kuruldu');
                 reconnectAttempts = 0;
@@ -535,20 +549,21 @@
 
         function handleExamEvent(data) {
             console.log('Handling exam event:', data);
-            
+
             const departmentData = JSON.parse(localStorage.getItem('departmentData'));
             if (!departmentData || (data.departmentId && data.departmentId !== departmentData.id)) {
                 console.log('Ignoring event for different department');
                 return;
             }
 
-            switch(data.type) {
+            switch (data.type) {
                 case WS_MESSAGE_TYPES.EXAM_CREATE:
                     const newEvent = createCalendarEvent(data.data);
                     calendar.addEvent(newEvent);
-                    showToast('success', 'Yeni sınav eklendi!');
+                    showToast('success', 'Yeni snav eklendi!');
+                    updateExamTable(); // Update the table when new exam is added
                     break;
-                    
+
                 case WS_MESSAGE_TYPES.EXAM_UPDATE:
                     calendar.getEvents().forEach(event => {
                         if (event.id === data.data.id.toString()) {
@@ -557,8 +572,9 @@
                     });
                     calendar.addEvent(createCalendarEvent(data.data));
                     showToast('info', 'Sınav güncellendi!');
+                    updateExamTable(); // Update the table when exam is updated
                     break;
-                    
+
                 case WS_MESSAGE_TYPES.EXAM_DELETE:
                     calendar.getEvents().forEach(event => {
                         if (event.id === data.data.toString()) {
@@ -566,13 +582,15 @@
                         }
                     });
                     showToast('warning', 'Sınav silindi!');
+                    updateExamTable(); // Update the table when exam is deleted
                     break;
-                    
+
                 case WS_MESSAGE_TYPES.EXAM_LIST:
                     calendar.removeAllEvents();
                     data.data.forEach(exam => {
                         calendar.addEvent(createCalendarEvent(exam));
                     });
+                    updateExamTable(); // Update the table when exam list is loaded
                     break;
             }
         }
@@ -580,13 +598,13 @@
         function createCalendarEvent(examData) {
             // Create a more descriptive event title
             const courseTitle = examData.course?.name || 'Belirtilmemiş';
-            const teacherName = examData.teacherInCharge 
-                ? `${examData.teacherInCharge.title || ''} ${examData.teacherInCharge.name}`.trim()
-                : 'Belirtilmemiş';
-            
+            const teacherTitle = examData.teacherInCharge?.title || '';
+            const teacherName = examData.teacherInCharge?.name || 'Belirtilmemiş';
+            const fullTeacherName = teacherTitle ? `${teacherTitle} ${teacherName}` : teacherName;
+
             return {
                 id: examData.id.toString(),
-                title: `${courseTitle}\n${teacherName}`,
+                title: `${courseTitle}\n${fullTeacherName}`,
                 start: new Date(examData.startTime),
                 end: new Date(examData.endTime),
                 extendedProps: {
@@ -604,10 +622,10 @@
         function showToast(type, message) {
             const toastEl = document.getElementById('notificationToast');
             const toastBody = toastEl.querySelector('.toast-body');
-            
+
             // Set toast color based on type
             toastEl.className = 'toast align-items-center text-white border-0';
-            switch(type) {
+            switch (type) {
                 case 'success':
                     toastEl.classList.add('bg-success');
                     break;
@@ -621,14 +639,14 @@
                     toastEl.classList.add('bg-info');
                     break;
             }
-            
+
             toastBody.innerHTML = `<i class="bi bi-info-circle me-2"></i>${message}`;
             const toast = new bootstrap.Toast(toastEl);
             toast.show();
         }
 
         // Initialize calendar with WebSocket support
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
@@ -644,11 +662,11 @@
                 allDaySlot: false,
                 selectable: true, // Enable date selection
                 editable: false, // Disable drag and drop
-                eventClick: function(info) {
+                eventClick: function (info) {
                     currentExamId = info.event.id; // Set the current exam ID when an event is clicked
                     showExamDetails(info.event);
                 },
-                dateClick: function(info) {
+                dateClick: function (info) {
                     selectedDate = info.dateStr;
                     const modal = document.getElementById('examModal');
                     const dateDisplay = document.getElementById('selectedDateDisplay');
@@ -661,20 +679,19 @@
                 },
                 events: [], // Initially empty, will be populated by loadExams()
             });
-            
+
             calendar.render();
             loadExams(); // Initial load
-            
+
             // Add event listeners for modals
             const examModal = document.getElementById('examModal');
             if (examModal) {
-                examModal.addEventListener('show.bs.modal', async function() {
+                examModal.addEventListener('show.bs.modal', async function () {
                     try {
                         await Promise.all([
                             loadCourses(),
                             loadTeachers(),
                             loadExamRooms(),
-                            loadSupervisors()
                         ]);
                     } catch (error) {
                         console.error('Modal yükleme hatası:', error);
@@ -686,7 +703,7 @@
             // Add modal event listener inside DOMContentLoaded
             const createExamModal = document.getElementById('examModal');
             if (createExamModal) {
-                createExamModal.addEventListener('show.bs.modal', function() {
+                createExamModal.addEventListener('show.bs.modal', function () {
                     loadSupervisors();
                 });
             }
@@ -694,13 +711,19 @@
             // Add event listener for exam form submission
             const examForm = document.getElementById('examForm');
             if (examForm) {
-                examForm.addEventListener('submit', async function(e) {
+                examForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
-                    
+
                     try {
                         const departmentData = JSON.parse(localStorage.getItem('departmentData'));
                         const supervisorsSelect = document.getElementById('supervisorsSelect');
                         const selectedSupervisors = Array.from(supervisorsSelect.selectedOptions).map(option => parseInt(option.value));
+
+                        // Get the exam name
+                        const examName = document.getElementById('examName').value.trim();
+                        if (!examName) {
+                            throw new Error('Exam name is required');
+                        }
 
                         // Get the time inputs
                         const startTimeStr = document.getElementById('startTime').value;
@@ -724,8 +747,8 @@
                             const eventStart = event.start;
                             const eventEnd = event.end;
                             return (startDate >= eventStart && startDate < eventEnd) ||
-                                   (endDate > eventStart && endDate <= eventEnd) ||
-                                   (startDate <= eventStart && endDate >= eventEnd);
+                                (endDate > eventStart && endDate <= eventEnd) ||
+                                (startDate <= eventStart && endDate >= eventEnd);
                         });
 
                         if (hasConflict) {
@@ -733,15 +756,51 @@
                             return;
                         }
 
+                        const selectedDateDisplay = document.getElementById('selectedDateDisplay').textContent;
+                        if (!selectedDateDisplay) {
+                            throw new Error('Tarih seçilmesi gerekiyor');
+                        }
+
+                        // Check teacher availability
+                        const isTeacherAvailable = await checkTeacherAvailability(
+                            parseInt(document.getElementById('teacherSelect').value),
+                            startDate.toISOString(),
+                            endDate.toISOString()
+                        );
+
+                        if (!isTeacherAvailable) {
+                            showToast('error', 'Seçilen öğretmen bu saatte müsait değil!');
+                            return;
+                        }
+
+                        // Check room availability
+                        const selectedRoomIds = Array.from(document.getElementById('roomSelect').selectedOptions).map(option => parseInt(option.value));
+                        const areRoomsAvailable = await checkRoomAvailability(
+                            selectedRoomIds,
+                            startDate.toISOString(),
+                            endDate.toISOString()
+                        );
+
+                        if (!areRoomsAvailable) {
+                            showToast('error', 'Seçilen sınıflardan biri bu saatte dolu!');
+                            return;
+                        }
+
                         const formData = {
+                            name: document.getElementById('examName').value,
                             courseId: parseInt(document.getElementById('courseSelect').value),
                             teacherId: parseInt(document.getElementById('teacherSelect').value),
-                            examRoomId: parseInt(document.getElementById('roomSelect').value),
+                            examRoomIds: Array.from(document.getElementById('roomSelect').selectedOptions).map(option => parseInt(option.value)),
                             startTime: startDate.toISOString(),
                             endTime: endDate.toISOString(),
+                            date: selectedDate,
                             departmentId: departmentData.id,
                             supervisorIds: selectedSupervisors
                         };
+
+                        if (!formData.examRoomIds || formData.examRoomIds.length === 0) {
+                            throw new Error('En az bir sınav yeri seçmelisiniz');
+                        }
 
                         console.log('Sending exam data:', formData);
 
@@ -755,28 +814,28 @@
                         });
 
                         const data = await response.json();
-                        
+
                         if (!response.ok) {
                             throw new Error(data.error || 'Sınav oluşturma başarısız');
                         }
 
                         showToast('success', 'Sınav başarıyla oluşturuldu');
-                        
+
                         // Close modal and reset form
                         const modal = bootstrap.Modal.getInstance(document.getElementById('examModal'));
                         modal.hide();
                         e.target.reset();
-                        
+
                         // Refresh calendar
                         loadExams();
-                        
+
                     } catch (error) {
                         console.error('Sınav oluşturma hatası:', error);
                         showToast('error', 'Sınav oluşturulurken bir hata oluştu: ' + error.message);
                     }
                 });
             }
-            
+
             // Initialize WebSocket connection
             connectWebSocket();
         });
@@ -788,7 +847,7 @@
                 showToast('error', 'Silinecek sınav seçilmedi');
                 return;
             }
-            
+
             if (!confirm('Bu sınavı silmek istediğinizden emin misiniz?')) {
                 return;
             }
@@ -871,8 +930,8 @@
 
                 const courses = await response.json();
                 const select = document.getElementById('courseSelect');
-                select.innerHTML = '<option value="">Ders seçiniz</option>' + 
-                    courses.map(course => 
+                select.innerHTML = '<option value="">Ders seçiniz</option>' +
+                    courses.map(course =>
                         `<option value="${course.id}">${course.name}</option>`
                     ).join('');
             } catch (error) {
@@ -901,7 +960,7 @@
                 }
 
                 const result = await response.json();
-                
+
                 if (!result.success) {
                     throw new Error(result.error || 'Öğretmen verisi alınamadı');
                 }
@@ -965,7 +1024,7 @@
 
         // Call loadTeachers when the page loads and when the modal opens
         document.addEventListener('DOMContentLoaded', loadTeachers);
-        
+
         const examModal = document.getElementById('examModal');
         if (examModal) {
             examModal.addEventListener('show.bs.modal', loadTeachers);
@@ -1003,8 +1062,8 @@
                 }
 
                 const select = document.getElementById('roomSelect');
-                select.innerHTML = '<option value="">Sınıf seçiniz</option>' + 
-                    result.data.map(room => 
+                select.innerHTML = '<option value="">Sınav yeri seçiniz</option>' +
+                    result.data.map(room =>
                         `<option value="${room.id}">${room.roomCode}</option>`
                     ).join('');
             } catch (error) {
@@ -1032,7 +1091,7 @@
 
                 const teachers = await response.json();
                 const supervisorsSelect = document.getElementById('supervisorsSelect');
-                
+
                 if (!supervisorsSelect) {
                     console.error('Supervisors select element not found');
                     return;
@@ -1081,7 +1140,7 @@
                 }
 
                 const result = await response.json();
-                
+
                 if (!result.success) {
                     throw new Error(result.error || 'Veri yüklenirken bir hata oluştu');
                 }
@@ -1117,11 +1176,11 @@
             }
 
             const examData = event.extendedProps;
-            
+
             // Format dates
             const startDate = new Date(event.start);
             const endDate = new Date(event.end);
-            const dateOptions = { 
+            const dateOptions = {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -1134,11 +1193,11 @@
             const elements = {
                 'examTitle': event.title,
                 'examDate': startDate.toLocaleDateString('tr-TR', dateOptions),
-                'examTime': `${startDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})} - ${endDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})}`,
+                'examTime': `${startDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`,
                 'examCourse': examData.course?.name || 'Belirtilmemiş',
                 'examTeacher': examData.teacher ? `${examData.teacher.title || ''} ${examData.teacher.name}` : 'Belirtilmemiş',
                 'examRoom': examData.room?.roomCode || 'Belirtilmemiş',
-                'examSupervisors': examData.supervisors?.length > 0 
+                'examSupervisors': examData.supervisors?.length > 0
                     ? examData.supervisors.map(s => `${s.title || ''} ${s.name}`).join(', ')
                     : 'Gözetmen atanmamış'
             };
@@ -1158,7 +1217,7 @@
 
         async function createExam(event) {
             event.preventDefault();
-            
+
             try {
                 const departmentData = JSON.parse(localStorage.getItem('departmentData'));
                 const supervisorsSelect = document.getElementById('supervisorsSelect');
@@ -1167,24 +1226,29 @@
                 // Convert times to ISO string format with the correct timezone
                 const startTimeStr = document.getElementById('startTime').value;
                 const endTimeStr = document.getElementById('endTime').value;
-                
+
                 // Create Date objects with the selected date and times
                 const startDate = new Date(selectedDate + 'T' + startTimeStr);
                 const endDate = new Date(selectedDate + 'T' + endTimeStr);
-                
+
                 // Ensure we're using local timezone
                 const startISO = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 60000)).toISOString();
                 const endISO = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 60000)).toISOString();
 
                 const formData = {
+                    name: document.getElementById('examName').value,
                     courseId: parseInt(document.getElementById('courseSelect').value),
                     teacherId: parseInt(document.getElementById('teacherSelect').value),
-                    examRoomId: parseInt(document.getElementById('roomSelect').value),
+                    examRoomIds: Array.from(document.getElementById('roomSelect').selectedOptions).map(option => parseInt(option.value)),
                     startTime: startISO,
                     endTime: endISO,
                     departmentId: departmentData.id,
                     supervisorIds: selectedSupervisors
                 };
+
+                if (!formData.examRoomIds || formData.examRoomIds.length === 0) {
+                    throw new Error('En az bir sınav yeri seçmelisiniz');
+                }
 
                 console.log('Sending exam data:', formData);
 
@@ -1198,21 +1262,21 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (!response.ok) {
                     throw new Error(data.error || 'Sınav oluşturma başarısız');
                 }
 
                 showToast('success', 'Sınav başarıyla oluşturuldu');
-                
+
                 // Close modal and reset form
                 const modal = bootstrap.Modal.getInstance(document.getElementById('examModal'));
                 modal.hide();
                 event.target.reset();
-                
+
                 // Refresh calendar
                 loadExams();
-                
+
             } catch (error) {
                 console.error('Sınav oluşturma hatası:', error);
                 showToast('error', 'Sınav oluşturulurken bir hata oluştu: ' + error.message);
@@ -1221,7 +1285,7 @@
 
         let departmentData = null;
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
             // Get department data from localStorage
             departmentData = JSON.parse(localStorage.getItem('departmentData'));
             if (!departmentData) {
@@ -1270,17 +1334,17 @@
                     const startDate = new Date(exam.startTime);
                     const endDate = new Date(exam.endTime);
                     const row = document.createElement('tr');
-                    
+
                     row.innerHTML = `
                         <td>${startDate.toLocaleDateString('tr-TR')}</td>
-                        <td>${startDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})} - 
-                            ${endDate.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'})}</td>
+                        <td>${startDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - 
+                            ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</td>
                         <td>${exam.course?.name || '-'}</td>
                         <td>${exam.teacher ? `${exam.teacher.title || ''} ${exam.teacher.name}` : '-'}</td>
                         <td>${exam.room?.roomCode || '-'}</td>
                         <td>${exam.supervisors?.map(s => `${s.title || ''} ${s.name}`).join(', ') || '-'}</td>
                     `;
-                    
+
                     tableBody.appendChild(row);
                 });
             } catch (error) {
@@ -1293,18 +1357,18 @@
             try {
                 // First update the table to ensure we have the latest data
                 await updateExamTable();
-                
+
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'mm', 'a4');
-                
+
                 // Add title
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(16);
                 doc.text("Sınav Programı", doc.internal.pageSize.width / 2, 20, { align: "center" });
-                
+
                 // Get the table element
                 const table = document.getElementById('examTable');
-                
+
                 // Convert table to PDF using autoTable plugin
                 doc.autoTable({
                     html: '#examTable',
@@ -1332,16 +1396,16 @@
                     },
                     margin: { top: 30 }
                 });
-                
+
                 // Add footer with date
                 const today = new Date().toLocaleDateString('tr-TR');
                 doc.setFontSize(8);
                 doc.setFont("helvetica", "normal");
                 doc.text(`Oluşturulma Tarihi: ${today}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10, { align: "right" });
-                
+
                 // Save the PDF
                 doc.save('sinav-programi.pdf');
-                
+
                 showToast('success', 'PDF başarıyla oluşturuldu');
             } catch (error) {
                 console.error('PDF oluşturma hatası:', error);
@@ -1355,31 +1419,120 @@
             updateExamTable();
         });
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
             // ... existing code ...
-            
+
             // Initialize the exam table
             await updateExamTable();
         });
+
+        async function loadRooms() {
+            try {
+                const response = await fetch(`/api/examrooms/department?departmentId=${departmentData.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${departmentData.token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Sınav yerleri yüklenirken hata oluştu');
+                }
+
+                const rooms = await response.json();
+                const roomSelect = document.getElementById('roomSelect');
+                roomSelect.innerHTML = rooms.map(room => 
+                    `<option value="${room.id}">${room.roomCode} (Kapasite: ${room.capacity})</option>`
+                ).join('');
+            } catch (error) {
+                console.error('Sınav yeri yükleme hatası:', error);
+                showToast('error', 'Sınav yerleri yüklenirken bir hata oluştu');
+            }
+        }
+
+        // Add this function to check teacher availability
+        async function checkTeacherAvailability(teacherId, startTime, endTime) {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                const response = await fetch(`/api/exams/check-teacher-availability`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify({
+                        teacherId: teacherId,
+                        startTime: startTime,
+                        endTime: endTime,
+                        departmentId: departmentData.id
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Öğretmen müsaitlik kontrolü başarısız');
+                }
+                
+                const data = await response.json();
+                return data.available;
+            } catch (error) {
+                console.error('Öğretmen müsaitlik kontrolü hatası:', error);
+                showToast('error', 'Öğretmen müsaitlik kontrolü yapılırken bir hata oluştu');
+                return false;
+            }
+        }
+
+        async function checkRoomAvailability(roomIds, startTime, endTime) {
+            try {
+                const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+                const response = await fetch(`/api/exams/check-room-availability`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${departmentData.token}`
+                    },
+                    body: JSON.stringify({
+                        roomIds: roomIds,
+                        startTime: startTime,
+                        endTime: endTime,
+                        departmentId: departmentData.id
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Sınıf müsaitlik kontrolü başarısız');
+                }
+                
+                const data = await response.json();
+                return data.available;
+            } catch (error) {
+                console.error('Sınıf müsaitlik kontrolü hatası:', error);
+                showToast('error', 'Sınıf müsaitlik kontrolü yapılırken bir hata oluştu');
+                return false;
+            }
+        }
     </script>
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-        <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
                     <i class="bi bi-info-circle me-2"></i>Bildirim
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
     <!-- Toast for notifications -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="notificationToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="notificationToast" class="toast align-items-center text-white border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
 </body>
+
 </html>

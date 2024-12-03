@@ -1,0 +1,69 @@
+function handleExamEvent(data) {
+    console.log('Handling exam event:', data);
+    
+    const departmentData = JSON.parse(localStorage.getItem('departmentData'));
+    if (!departmentData || (data.departmentId && data.departmentId !== departmentData.id)) {
+        console.log('Ignoring event for different department');
+        return;
+    }
+
+    switch(data.type) {
+        case WS_MESSAGE_TYPES.EXAM_CREATE:
+            const newEvent = createCalendarEvent(data.data);
+            calendar.addEvent(newEvent);
+            showToast('success', 'Yeni sınav eklendi!');
+            updateExamTable(); // Update the table when new exam is added
+            break;
+            
+        case WS_MESSAGE_TYPES.EXAM_UPDATE:
+            calendar.getEvents().forEach(event => {
+                if (event.id === data.data.id.toString()) {
+                    event.remove();
+                }
+            });
+            calendar.addEvent(createCalendarEvent(data.data));
+            showToast('info', 'Sınav güncellendi!');
+            updateExamTable(); // Update the table when exam is updated
+            break;
+            
+        case WS_MESSAGE_TYPES.EXAM_DELETE:
+            calendar.getEvents().forEach(event => {
+                if (event.id === data.data.toString()) {
+                    event.remove();
+                }
+            });
+            showToast('warning', 'Sınav silindi!');
+            updateExamTable(); // Update the table when exam is deleted
+            break;
+            
+        case WS_MESSAGE_TYPES.EXAM_LIST:
+            calendar.removeAllEvents();
+            data.data.forEach(exam => {
+                calendar.addEvent(createCalendarEvent(exam));
+            });
+            updateExamTable(); // Update the table when exam list is loaded
+            break;
+    }
+}
+
+function createCalendarEvent(examData) {
+    // Create a more descriptive event title
+    const courseTitle = examData.course?.name || 'Belirtilmemiş';
+    const teacherTitle = examData.teacherInCharge?.title || '';
+    const teacherName = examData.teacherInCharge?.name || 'Belirtilmemiş';
+    const fullTeacherName = teacherTitle ? `${teacherTitle} ${teacherName}` : teacherName;
+    
+    return {
+        id: examData.id.toString(),
+        title: `${courseTitle}\n${fullTeacherName}`,
+        start: new Date(examData.startTime),
+        end: new Date(examData.endTime),
+        extendedProps: {
+            course: examData.course,
+            teacher: examData.teacherInCharge,
+            supervisors: examData.supervisors || [],
+            room: examData.examRooms?.[0],
+            allRooms: examData.examRooms || []
+        }
+    };
+}

@@ -47,17 +47,16 @@ model Course {
 
 // Öğretmen modeli
 model Teacher {
-  id                Int      @id @default(autoincrement())
+  id                Int           @id @default(autoincrement())
   name              String   
   title             String   
   email             String?  
   phone             String?  
-  departmentId      Int
-  department        Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  examsAsInCharge   Exam[]    @relation("TeacherInCharge")
-  examsAsSupervisor Exam[]    @relation("ExamSupervisors")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  departments       Department[]
+  examsAsInCharge   Exam[]       @relation("TeacherInCharge")
+  examsAsSupervisor Exam[]       @relation("ExamSupervisors")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
 
 // Sınav modeli
@@ -85,3 +84,6 @@ model Exam {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
+
+
+
