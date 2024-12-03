@@ -1472,6 +1472,9 @@
                 }
                 
                 const data = await response.json();
+                if (!data.available) {
+                    showToast('error', 'Seçilen öğretmen başka bir bölümde sınav görevinde!');
+                }
                 return data.available;
             } catch (error) {
                 console.error('Öğretmen müsaitlik kontrolü hatası:', error);

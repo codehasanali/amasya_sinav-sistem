@@ -793,6 +793,8 @@ func handleTeachersByDepartment(client *db.PrismaClient) http.HandlerFunc {
 			"data":    response,
 		})
 	}
+
+
 }
 
 func handleCheckTeacherAvailability(client *db.PrismaClient) http.HandlerFunc {
@@ -828,7 +830,7 @@ func handleCheckTeacherAvailability(client *db.PrismaClient) http.HandlerFunc {
 
         ctx := context.Background()
 
-        // Check for existing exams where this teacher is involved
+        // Check for existing exams in ALL departments where this teacher is involved
         exams, err := client.Exam.FindMany(
             db.Exam.And(
                 db.Exam.Or(
@@ -841,7 +843,6 @@ func handleCheckTeacherAvailability(client *db.PrismaClient) http.HandlerFunc {
                 ),
                 db.Exam.StartTime.Lt(endTime),
                 db.Exam.EndTime.Gt(startTime),
-                db.Exam.DepartmentID.Equals(request.DepartmentID),
             ),
         ).Exec(ctx)
 

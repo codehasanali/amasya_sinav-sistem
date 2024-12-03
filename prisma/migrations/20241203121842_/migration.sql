@@ -23,10 +23,8 @@ CREATE TABLE "Course" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
     "departmentId" INTEGER NOT NULL,
-    "teacherId" INTEGER NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Course_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Course_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "Teacher" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Course_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -48,6 +46,7 @@ CREATE TABLE "Exam" (
     "endTime" DATETIME NOT NULL,
     "date" DATETIME NOT NULL,
     "maxStudentCount" INTEGER NOT NULL DEFAULT 0,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
     "courseId" INTEGER NOT NULL,
     "departmentId" INTEGER NOT NULL,
     "teacherInChargeId" INTEGER NOT NULL,
